@@ -1,0 +1,55 @@
+# comment
+
+# profile must start with one of
+
+PROFILE
+
+REDIRECT
+
+RESOURCE name
+
+#   $ = prefix
+#   @ = repo
+
+
+# basic include
+INCLUDE: .got_profile_a
+
+# named include
+INCLUDE work: $work/GotConfig/.got_profile_work
+
+# advanced include
+INCLUDE b
+    file: .got_profile_b
+    #rename "$*": b.*         # namespace just the prefixes
+    #rename "@*": b.*         # namespace just the repos
+    rename "*": b.*           # namespace everything (prefixes and repos)
+    rename "$b.work": b2.work # rename a single prefix
+    prefix personal:
+
+PREFIX work
+    win: /c/code
+    unix: ~/code
+
+PREFIX personal
+    win: /c/bret
+    unix: ~/git
+
+PREFIX csharp
+    all: $personal/cs
+
+REPO bosunreporter
+    remote origin: git@github.com:bretcope/BosunReporter.git
+    path: $csharp/BosunReporter
+    alias bosun
+    override: merge|replace
+    config >
+        Literal text of .gitconfig if there is a local one in the repo
+        This could be many lines
+
+        And have breaks.
+            And such.
+
+# alternate way to create an alias to
+ALIAS bosun: @bosunreporter
+
