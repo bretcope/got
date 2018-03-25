@@ -72,6 +72,17 @@ Token* Lexer::Lex()
         case TokenType::Indent:
         case TokenType::Outdent:
         {
+            if (_position != _lineStart + _lineSpaces)
+            {
+                // the whitespace consumed at the start of the line doesn't match the number of spaces at the start of the line, which means there might be a
+                // tab character.
+                for (auto i = _lineStart; i < pos; i++)
+                {
+                    if (_input[i] == '\t')
+                        return NewToken(TokenType::Error_TabIndent, 0);
+                }
+            }
+
             // We only need to check for indentation changes immediately after the above tokens
             if (_indentLevel * Lexer::SPACES_PER_INDENT != _lineSpaces)
             {
