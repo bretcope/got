@@ -1,7 +1,7 @@
 #include "Token.h"
 
 
-Token::Token(TokenType type, Span triviaPosition, Span position):
+Token::Token(TokenType type, FileSpan triviaPosition, FileSpan position):
         Type(type),
         TriviaPosition(triviaPosition),
         Position(position)
@@ -29,8 +29,8 @@ void Token::DebugPrint(FILE* stream, const char* content, bool positions, bool c
 
     auto tokenName = GetTokenTypeName(Type);
 
-    auto start = Position.Start;
-    auto end = Position.End;
+    auto start = Position.Start();
+    auto end = Position.End();
 
     fprintf(stream, "%s%s%s ", tokenColor, tokenName, reset);
 

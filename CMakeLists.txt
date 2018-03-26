@@ -15,8 +15,12 @@ endif()
 
 add_executable(got
         src/main.cpp
+        src/FileContent.cpp
+        src/FileContent.h
         src/FileReader.cpp
         src/FileReader.h
+        src/FileSpan.cpp
+        src/FileSpan.h
         src/GotString.cpp
         src/GotString.h
         src/Lexer.cpp

@@ -1,10 +1,12 @@
 #include <cassert>
 #include "Lexer.h"
 
-Lexer::Lexer(const char* input, uint32_t size):
-    _input(input),
-    _size(size)
+Lexer::Lexer(FileContent* content):
+    _content(content),
+    _input(content->Data()),
+    _size(content->Size())
 {
+    _content->ResetLineMarkers();
     StartNewLine(0);
 }
 
@@ -161,7 +163,7 @@ void Lexer::ConsumeTrivia()
     }
 
     DONE:
-    _trivia = Span(_position, pos);
+    _trivia = FileSpan(_content, _position, pos);
     _position = pos;
 }
 
@@ -362,6 +364,8 @@ Token* Lexer::LexBlockText()
 
 uint32_t Lexer::StartNewLine(uint32_t lineStart)
 {
+    _content->MarkLine(lineStart);
+
     auto pos = lineStart;
     auto size = _size;
     auto input = _input;
@@ -370,7 +374,6 @@ uint32_t Lexer::StartNewLine(uint32_t lineStart)
         pos++;
     }
 
-    _lineNumber++;
     _lineStart = lineStart;
 
     auto spaces = pos - lineStart;
@@ -385,7 +388,7 @@ Token* Lexer::NewToken(TokenType type, uint32_t length)
     auto start = _position;
     auto end = start + length;
     _position = end;
-    auto token = new Token(type, _trivia, Span(start, end));
+    auto token = new Token(type, _trivia, FileSpan(_content, start, end));
     _trivia = {};
     return token;
 }

@@ -5,6 +5,7 @@
 #include <cstdio>
 #include "GotString.h"
 #include "SyntaxElement.h"
+#include "FileSpan.h"
 
 enum class TokenType
 {
@@ -59,38 +60,14 @@ inline const char* GetTokenTypeName(TokenType type)
     return "";
 }
 
-struct Span
-{
-    /**
-     * Inclusive Start position (byte offset from the document's start).
-     */
-    uint32_t Start;
-    /**
-     * Exclusive End position (byte offset from the document's start).
-     */
-    uint32_t End;
-
-    Span()
-    {
-        Start = 0;
-        End = 0;
-    }
-
-    Span(uint32_t start, uint32_t end)
-    {
-        Start = start;
-        End = end;
-    }
-};
-
 class Token final : public SyntaxElement
 {
 public:
     const TokenType Type;
-    const Span TriviaPosition;
-    const Span Position;
+    const FileSpan TriviaPosition;
+    const FileSpan Position;
 
-    Token(TokenType type, Span triviaPosition, Span position);
+    Token(TokenType type, FileSpan triviaPosition, FileSpan position);
     ~Token();
 
     bool IsToken() const final;

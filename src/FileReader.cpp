@@ -3,8 +3,10 @@
 #include <iostream>
 #include "FileReader.h"
 
-bool LoadFile(const char* filename, uint32_t maxSize, FILE* errStream, char** out_content, uint32_t* out_size)
+bool LoadFile(const char* filename, uint32_t maxSize, FILE* errStream, FileContent** out_content)
 {
+    *out_content = nullptr;
+
     if (filename == nullptr)
     {
         fprintf(errStream, "Error: Cannot load file. Filename is null.\n");
@@ -57,7 +59,11 @@ bool LoadFile(const char* filename, uint32_t maxSize, FILE* errStream, char** ou
         return false;
     }
 
-    *out_content = content;
-    *out_size = size;
+    // make a copy of the filename to be owned by FileContent
+    // todo: we should perform some sort of resolution on the file before loading, and we could use that as an opportunity to make a copy of the name
+    auto nameCopy = new char[nameLen + 1];
+    strcpy(nameCopy, filename);
+
+    *out_content = new FileContent(nameCopy, content, size);
     return true;
 }

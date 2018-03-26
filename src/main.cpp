@@ -4,13 +4,13 @@
 #include "FileReader.h"
 #include "Lexer.h"
 
-void DebugLexer(const char* content, uint32_t size)
+void DebugLexer(FileContent* content)
 {
-    auto lexer = new Lexer(content, size);
+    auto lexer = new Lexer(content);
 
     while (auto token = lexer->Advance())
     {
-        token->DebugPrint(stdout, content, false, true);
+        token->DebugPrint(stdout, content->Data(), false, true);
         delete token;
     }
 
@@ -29,13 +29,12 @@ int main(int argc, char** argv)
 
     const char* filename = "sample_profile";
 
-    char* content;
-    uint32_t size;
+    FileContent* content;
     const uint32_t MAX_SIZE = 10 * 1024 * 1024;
-    if (LoadFile(filename, MAX_SIZE, stderr, &content, &size))
+    if (LoadFile(filename, MAX_SIZE, stderr, &content))
     {
 //        std::cout.write(content, size);
-        DebugLexer(content, size);
+        DebugLexer(content);
     }
     else
     {
