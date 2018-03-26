@@ -28,8 +28,10 @@ public:
     explicit Lexer(FileContent* content);
     ~Lexer();
 
+    TokenType PeekType();
     Token* Peek();
     Token* Advance();
+    bool Consume(TokenType type, Token** out_token);
 
 private:
     Token* Lex();

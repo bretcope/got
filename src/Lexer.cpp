@@ -15,6 +15,11 @@ Lexer::~Lexer()
     delete _nextToken;
 }
 
+TokenType Lexer::PeekType()
+{
+    auto token = Peek();
+    return token == nullptr ? TokenType::Error_ : token->Type;
+}
 
 Token* Lexer::Peek()
 {
@@ -38,6 +43,19 @@ Token* Lexer::Advance()
 
     _nextToken = nullptr;
     return next;
+}
+
+bool Lexer::Consume(TokenType type, Token** out_token)
+{
+    auto token = Peek();
+    if (token != nullptr && token->Type == type)
+    {
+        *out_token = Advance();
+        return true;
+    }
+
+    *out_token = nullptr;
+    return false;
 }
 
 static inline bool IsAlpha(char ch)

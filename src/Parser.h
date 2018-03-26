@@ -2,13 +2,18 @@
 #define GOT_PARSER_H
 
 
-#include "Lexer.h"
+#include <cstdio>
+#include "FileContent.h"
+#include "Nodes.h"
 
-class Parser
-{
-private:
-    Lexer* _lexer;
-};
+/**
+ * Parses a configuration file into an abstract syntax tree (AST). Returns true if successful.
+ * @param content The content of the file to be parsed.
+ * @param errStream The file stream where to write error messages to (e.g. stderr).
+ * @param [out] out_tree The root node of the AST, if successful.
+ * @return True if the file was parsed successfully.
+ */
+bool ParseGotConfigurationFile(FileContent* content, FILE* errStream, FileNode** out_tree);
 
 
 #endif //GOT_PARSER_H

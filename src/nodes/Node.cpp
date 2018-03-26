@@ -25,19 +25,22 @@ int Node::VisitTokens(std::function<void(const Token*)> callback) const
     return count;
 }
 
-int Node::VisitNodes(std::function<void(const Node*)> callback) const
+int Node::VisitNodes(std::function<void(const Node* node, int level)> callback) const
 {
-    callback(this);
+    callback(this, 0);
     auto count = 1;
+    auto level = 1;
 
     std::function<void (const SyntaxElement*)> visitCallback = [&] (const SyntaxElement* element) -> void
     {
         if (element->IsNode())
         {
             auto node = (Node*)element;
-            callback(node);
+            callback(node, level);
             count++;
+            level++;
             node->IterateSyntaxElements(visitCallback);
+            level--;
         }
     };
 

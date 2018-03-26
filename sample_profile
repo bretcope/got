@@ -25,7 +25,7 @@ INCLUDE b
     #rename "@*": b.*         # namespace just the repos
     rename "*": b.*           # namespace everything (prefixes and repos)
     rename "$b.work": b2.work # rename a single prefix
-    prefix personal:
+    #prefix personal:
 
 PREFIX work
     win: /c/code

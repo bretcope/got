@@ -3,18 +3,37 @@
 #include <locale>
 #include "FileReader.h"
 #include "Lexer.h"
+#include "Parser.h"
 
 void DebugLexer(FileContent* content)
 {
-    auto lexer = new Lexer(content);
+    auto lexer = Lexer(content);
 
-    while (auto token = lexer->Advance())
+    while (auto token = lexer.Advance())
     {
         token->DebugPrint(stdout, content->Data(), false, true);
         delete token;
     }
+}
 
-    delete lexer;
+void DebugParser(FileContent* content)
+{
+    FileNode* tree;
+    if (ParseGotConfigurationFile(content, stderr, &tree))
+    {
+        auto callback = [] (const Node* node, int level) -> void
+        {
+            for (auto i = 0; i < level; i++)
+            {
+                fwrite("  ", 1, 2, stdout);
+            }
+
+            puts(GetNodeTypeName(node->Type()));
+        };
+
+        tree->VisitNodes(callback);
+        delete tree;
+    }
 }
 
 int main(int argc, char** argv)
@@ -34,7 +53,8 @@ int main(int argc, char** argv)
     if (LoadFile(filename, MAX_SIZE, stderr, &content))
     {
 //        std::cout.write(content, size);
-        DebugLexer(content);
+//        DebugLexer(content);
+        DebugParser(content);
     }
     else
     {

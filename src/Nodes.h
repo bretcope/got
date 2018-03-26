@@ -2,6 +2,7 @@
 #define GOT_NODES_H
 
 #include <memory>
+#include <functional>
 #include "Token.h"
 #include "SyntaxElement.h"
 
@@ -37,7 +38,7 @@ public:
     virtual NodeType Type() const = 0;
     virtual void IterateSyntaxElements(std::function<void(const SyntaxElement*)> callback) const = 0;
     int VisitTokens(std::function<void(const Token*)> callback) const;
-    int VisitNodes(std::function<void(const Node*)> callback) const;
+    int VisitNodes(std::function<void(const Node* node, int level)> callback) const;
 };
 
 class FileNode;
