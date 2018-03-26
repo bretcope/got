@@ -85,23 +85,19 @@ struct Span
 
 class Token final : public SyntaxElement
 {
-private:
-    GotString* _value;
-
 public:
     const TokenType Type;
     const Span TriviaPosition;
     const Span Position;
 
     Token(TokenType type, Span triviaPosition, Span position);
-    Token(TokenType type, Span triviaPosition, Span position, GotString* value);
     ~Token();
 
     bool IsToken() const final;
 
-    const GotString* Value() const;
-
     void DebugPrint(FILE* stream, const char* content, bool positions, bool color) const;
+
+    // todo: char* ParseStringValue
 };
 
 

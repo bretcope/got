@@ -4,32 +4,15 @@
 Token::Token(TokenType type, Span triviaPosition, Span position):
         Type(type),
         TriviaPosition(triviaPosition),
-        Position(position),
-        _value(nullptr)
+        Position(position)
 {
 }
 
-Token::Token(TokenType type, Span triviaPosition, Span position, GotString* value):
-        Type(type),
-        TriviaPosition(triviaPosition),
-        Position(position),
-        _value(value)
-{
-}
-
-Token::~Token()
-{
-    delete _value;
-}
+Token::~Token() = default;
 
 bool Token::IsToken() const
 {
     return true;
-}
-
-const GotString *Token::Value() const
-{
-    return _value;
 }
 
 void Token::DebugPrint(FILE* stream, const char* content, bool positions, bool color) const
