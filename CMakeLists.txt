@@ -13,4 +13,4 @@ elseif(UNIX)
     add_definitions(-DUNIX)
 endif()
 
-add_executable(got main.cpp Token.h Node.cpp Node.h GotString.cpp GotString.h Token.cpp Lexer.cpp Lexer.h FileReader.cpp FileReader.h Utf8Char.h)
+add_executable(got src/main.cpp src/Token.h src/Node.cpp src/Node.h src/GotString.cpp src/GotString.h src/Token.cpp src/Lexer.cpp src/Lexer.h src/FileReader.cpp src/FileReader.h src/Utf8Char.h)
