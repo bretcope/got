@@ -22,6 +22,11 @@ Token::~Token()
     delete _value;
 }
 
+bool Token::IsToken() const
+{
+    return true;
+}
+
 const GotString *Token::Value() const
 {
     return _value;

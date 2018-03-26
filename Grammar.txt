@@ -84,8 +84,8 @@ QuotedText:     Quoted text begins with a double-quote ("), followed by zero or
                 Quoted text must not contain new-line characters (LF or CR).
 
                 A literal double-quote within quoted text can be represented by
-                escaping it with an additional double-quote (""). No other
-                escape sequences are currently supported.
+                escaping it with a backslash character (\"). Other standard
+                escape sequences should be supported.
 
 BlockText:      Block text begins with a greater-than (>), followed by optional
                 whitespace, followed by a new line (LF or CRLF). Each subsequent
@@ -102,6 +102,9 @@ BlockText:      Block text begins with a greater-than (>), followed by optional
 --- NON-TERMINALS --------------------------------------------------------------
 
 Start
+    File
+
+File
     PropertyList endOfInput
 
 PropertyList
@@ -109,20 +112,19 @@ PropertyList
     Property
 
 Property
-    PropertyDeclaration : Value_opt endOfLine
-    PropertyDeclaration blockText endOfLine
+    PropertyDeclaration PropertyValue endOfLine
     PropertyDeclaration endOfLine PropertyBlock_opt
 
 PropertyDeclaration
-    word PropertyName_opt
-
-PropertyName
+    ## property type, followed by an optional name
+    word word
+    word quotedText
     word
-    quotedText
 
-Value
-    lineText
-    quotedText
+PropertyValue
+    : quotedText
+    : lineText
+    blockText
 
 PropertyBlock
     indent PropertyList outdent

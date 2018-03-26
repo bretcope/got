@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstdio>
 #include "GotString.h"
+#include "SyntaxElement.h"
 
 enum class TokenType
 {
@@ -82,7 +83,7 @@ struct Span
     }
 };
 
-class Token
+class Token final : public SyntaxElement
 {
 private:
     GotString* _value;
@@ -92,10 +93,11 @@ public:
     const Span TriviaPosition;
     const Span Position;
 
-
     Token(TokenType type, Span triviaPosition, Span position);
     Token(TokenType type, Span triviaPosition, Span position, GotString* value);
     ~Token();
+
+    bool IsToken() const final;
 
     const GotString* Value() const;
 

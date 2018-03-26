@@ -13,4 +13,25 @@ elseif(UNIX)
     add_definitions(-DUNIX)
 endif()
 
-add_executable(got src/main.cpp src/Token.h src/Node.cpp src/Node.h src/GotString.cpp src/GotString.h src/Token.cpp src/Lexer.cpp src/Lexer.h src/FileReader.cpp src/FileReader.h src/Utf8Char.h)
+add_executable(got
+        src/main.cpp
+        src/FileReader.cpp
+        src/FileReader.h
+        src/GotString.cpp
+        src/GotString.h
+        src/Lexer.cpp
+        src/Lexer.h
+        src/Nodes.h
+        src/nodes/FileNode.cpp
+        src/nodes/Node.cpp
+        src/nodes/PropertyListNode.cpp
+        src/nodes/PropertyNode.cpp
+        src/nodes/PropertyDeclarationNode.cpp
+        src/nodes/PropertyBlockNode.cpp
+        src/nodes/PropertyValueNode.cpp
+        src/Parser.cpp
+        src/Parser.h
+        src/SyntaxElement.h
+        src/Token.cpp
+        src/Token.h
+        src/Utf8Char.h)
