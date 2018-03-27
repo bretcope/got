@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.4)
-project(got)
+project(mot)
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -13,7 +13,7 @@ elseif(UNIX)
     add_definitions(-DUNIX)
 endif()
 
-add_executable(got
+add_executable(cmot
         src/main.cpp
         src/FileContent.cpp
         src/FileContent.h
@@ -21,8 +21,8 @@ add_executable(got
         src/FileReader.h
         src/FileSpan.cpp
         src/FileSpan.h
-        src/GotString.cpp
-        src/GotString.h
+        src/MotString.cpp
+        src/MotString.h
         src/Lexer.cpp
         src/Lexer.h
         src/Nodes.h

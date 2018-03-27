@@ -1,5 +1,5 @@
-#ifndef GOT_FILE_H
-#define GOT_FILE_H
+#ifndef MOT_FILE_H
+#define MOT_FILE_H
 
 
 #include <cstdint>
@@ -18,4 +18,4 @@ const uint32_t MAX_FILENAME_SIZE = 600;     // Windows limit is 260 UTF-16 chara
 bool LoadFile(const char* filename, uint32_t maxSize, FILE* errStream, FileContent** out_content);
 
 
-#endif //GOT_FILE_H
+#endif //MOT_FILE_H

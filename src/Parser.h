@@ -1,5 +1,5 @@
-#ifndef GOT_PARSER_H
-#define GOT_PARSER_H
+#ifndef MOT_PARSER_H
+#define MOT_PARSER_H
 
 
 #include <cstdio>
@@ -13,7 +13,7 @@
  * @param [out] out_tree The root node of the AST, if successful.
  * @return True if the file was parsed successfully.
  */
-bool ParseGotConfigurationFile(FileContent* content, FILE* errStream, FileNode** out_tree);
+bool ParseConfigurationFile(FileContent* content, FILE* errStream, FileNode** out_tree);
 
 
-#endif //GOT_PARSER_H
+#endif //MOT_PARSER_H

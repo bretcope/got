@@ -1,5 +1,5 @@
-#ifndef GOT_UNICODECHAR_H
-#define GOT_UNICODECHAR_H
+#ifndef MOT_UNICODECHAR_H
+#define MOT_UNICODECHAR_H
 
 #include <cstdint>
 
@@ -41,4 +41,4 @@ uint32_t GetUtf8Size(char firstByte)
     return 0;
 }
 
-#endif //GOT_UNICODECHAR_H
+#endif //MOT_UNICODECHAR_H

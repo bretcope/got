@@ -1,5 +1,5 @@
-#ifndef GOT_FILECONTENT_H
-#define GOT_FILECONTENT_H
+#ifndef MOT_FILECONTENT_H
+#define MOT_FILECONTENT_H
 
 
 #include <cstdint>
@@ -34,4 +34,4 @@ public:
 };
 
 
-#endif //GOT_FILECONTENT_H
+#endif //MOT_FILECONTENT_H

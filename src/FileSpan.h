@@ -1,5 +1,5 @@
-#ifndef GOT_SPAN_H
-#define GOT_SPAN_H
+#ifndef MOT_SPAN_H
+#define MOT_SPAN_H
 
 #include <cstdint>
 #include "FileContent.h"
@@ -29,4 +29,4 @@ public:
     uint32_t End() const;
 };
 
-#endif //GOT_SPAN_H
+#endif //MOT_SPAN_H

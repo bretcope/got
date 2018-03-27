@@ -19,7 +19,7 @@ void DebugLexer(FileContent* content)
 void DebugParser(FileContent* content)
 {
     FileNode* tree;
-    if (ParseGotConfigurationFile(content, stderr, &tree))
+    if (ParseConfigurationFile(content, stderr, &tree))
     {
         auto callback = [] (const Node* node, int level) -> void
         {

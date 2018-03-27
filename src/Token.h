@@ -1,9 +1,9 @@
-#ifndef GOT_TOKEN_H
-#define GOT_TOKEN_H
+#ifndef MOT_TOKEN_H
+#define MOT_TOKEN_H
 
 #include <cstdint>
 #include <cstdio>
-#include "GotString.h"
+#include "MotString.h"
 #include "SyntaxElement.h"
 #include "FileSpan.h"
 
@@ -78,4 +78,4 @@ public:
 };
 
 
-#endif //GOT_TOKEN_H
+#endif //MOT_TOKEN_H

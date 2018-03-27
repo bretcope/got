@@ -1,10 +1,10 @@
-#ifndef GOT_GOTSTRING_H
-#define GOT_GOTSTRING_H
+#ifndef MOT_GOTSTRING_H
+#define MOT_GOTSTRING_H
 
 
 #include <cstdlib>
 
-class GotString
+class MotString
 {
 private:
     char* _data;
@@ -16,8 +16,8 @@ public:
      * @param data The raw UTF-8 string.
      * @param byteCount The number of bytes which are meaningful (excludes the null terminator).
      */
-    GotString(char* data, size_t byteCount);
-    ~GotString();
+    MotString(char* data, size_t byteCount);
+    ~MotString();
 
     const char* Value() const;
     /**
@@ -27,4 +27,4 @@ public:
 };
 
 
-#endif //GOT_GOTSTRING_H
+#endif //MOT_GOTSTRING_H

@@ -37,7 +37,7 @@ Parser::Parser(Lexer* lexer, FileContent* content, FILE* errStream):
 Parser::~Parser() = default;
 
 
-bool ParseGotConfigurationFile(FileContent* content, FILE* errStream, FileNode** out_tree)
+bool ParseConfigurationFile(FileContent* content, FILE* errStream, FileNode** out_tree)
 {
     Lexer lexer(content);
     Parser parser(&lexer, content, errStream);

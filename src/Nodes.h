@@ -1,5 +1,5 @@
-#ifndef GOT_NODES_H
-#define GOT_NODES_H
+#ifndef MOT_NODES_H
+#define MOT_NODES_H
 
 #include <memory>
 #include <functional>
@@ -155,4 +155,4 @@ public:
 
 
 
-#endif //GOT_NODES_H
+#endif //MOT_NODES_H

@@ -1,5 +1,5 @@
-#ifndef GOT_SYNTAXELEMENT_H
-#define GOT_SYNTAXELEMENT_H
+#ifndef MOT_SYNTAXELEMENT_H
+#define MOT_SYNTAXELEMENT_H
 
 class SyntaxElement
 {
@@ -8,4 +8,4 @@ public:
     inline bool IsNode() const { return !IsToken(); }
 };
 
-#endif //GOT_SYNTAXELEMENT_H
+#endif //MOT_SYNTAXELEMENT_H

@@ -1,5 +1,5 @@
-#ifndef GOT_LEXER_H
-#define GOT_LEXER_H
+#ifndef MOT_LEXER_H
+#define MOT_LEXER_H
 
 
 #include <cstddef>
@@ -53,4 +53,4 @@ private:
 };
 
 
-#endif //GOT_LEXER_H
+#endif //MOT_LEXER_H
