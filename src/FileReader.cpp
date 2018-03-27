@@ -62,7 +62,7 @@ bool LoadFile(const char* filename, uint32_t maxSize, FILE* errStream, FileConte
     // make a copy of the filename to be owned by FileContent
     // todo: we should perform some sort of resolution on the file before loading, and we could use that as an opportunity to make a copy of the name
     auto nameCopy = new char[nameLen + 1];
-    strcpy(nameCopy, filename);
+    memcpy(nameCopy, filename, nameLen + 1);
 
     *out_content = new FileContent(nameCopy, content, size);
     return true;
