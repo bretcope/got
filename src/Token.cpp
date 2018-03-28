@@ -2,12 +2,12 @@
 #include "Token.h"
 
 
-Token::Token(TokenType type, FileSpan triviaPosition, FileSpan position):
-        Type(type),
-        TriviaPosition(triviaPosition),
-        Position(position)
+Token::Token(TokenType type, FileSpan trivia, FileSpan text):
+        _type(type),
+        _trivia(trivia),
+        _text(text)
 {
-    assert(triviaPosition.End() == position.Start());
+    assert(trivia.End() == text.Start());
 }
 
 Token::~Token() = default;
@@ -15,6 +15,21 @@ Token::~Token() = default;
 bool Token::IsToken() const
 {
     return true;
+}
+
+TokenType Token::Type() const
+{
+    return _type;
+}
+
+const FileSpan& Token::Trivia() const
+{
+    return _trivia;
+}
+
+const FileSpan& Token::Text() const
+{
+    return _text;
 }
 
 void Token::DebugPrint(FILE* stream, bool positions, bool color) const
@@ -25,14 +40,14 @@ void Token::DebugPrint(FILE* stream, bool positions, bool color) const
     auto boldRed = color ? "\033[1;31m" : "";
     auto yellow = color ? "\033[33m" : "";
 
-    auto tokenColor = Type == TokenType::EndOfLine ? boldBlue : boldGreen;
-    if (Type <= TokenType::Error_)
+    auto tokenColor = _type == TokenType::EndOfLine ? boldBlue : boldGreen;
+    if (_type <= TokenType::Error_)
         tokenColor = boldRed;
 
-    auto tokenName = GetTokenTypeName(Type);
+    auto tokenName = GetTokenTypeName(_type);
 
-    auto start = Position.Start();
-    auto end = Position.End();
+    auto start = _text.Start();
+    auto end = _text.End();
 
     fprintf(stream, "%s%s%s ", tokenColor, tokenName, reset);
 
@@ -41,10 +56,10 @@ void Token::DebugPrint(FILE* stream, bool positions, bool color) const
         fprintf(stream, "%u:%u ", start, end);
     }
 
-    if (Position.Length() > 0 && Type != TokenType::EndOfLine)
+    if (_text.Length() > 0 && _type != TokenType::EndOfLine)
     {
         fprintf(stream, "%s", yellow);
-        Position.Print(stream);
+        _text.Print(stream);
     }
 
     fprintf(stream, "%s\n", reset);

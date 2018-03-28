@@ -6,9 +6,9 @@ PropertyBlockNode::PropertyBlockNode(Token* indent, PropertyListNode* propertyLi
         _propertyList(propertyList),
         _outdent(outdent)
 {
-    assert(indent != nullptr && indent->Type == TokenType::Indent);
+    assert(indent != nullptr && indent->Type() == TokenType::Indent);
     assert(propertyList != nullptr);
-    assert(outdent != nullptr && outdent->Type == TokenType::Outdent);
+    assert(outdent != nullptr && outdent->Type() == TokenType::Outdent);
 }
 
 PropertyBlockNode::~PropertyBlockNode()

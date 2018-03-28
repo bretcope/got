@@ -300,8 +300,8 @@ void Parser::UnexpectedToken(int expectedCount, TokenType* expectedList)
     else
     {
         fprintf(_errStream, "Error: Cannot parse configuration file\n\n");
-        fprintf(_errStream, "    Unexpected Token \"%s\"\n", GetTokenTypeName(token->Type));
-        fprintf(_errStream, "      at \"%s\" %u\n", _content->Filename(), token->Position.Start());
+        fprintf(_errStream, "    Unexpected Token \"%s\"\n", GetTokenTypeName(token->Type()));
+        fprintf(_errStream, "      at \"%s\" %u\n", _content->Filename(), token->Text().Start());
     }
 
     if (expectedCount > 0)

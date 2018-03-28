@@ -8,7 +8,7 @@ PropertyNode::PropertyNode(PropertyDeclarationNode* declaration, Token* endOfLin
         _block(nullptr)
 {
     assert(declaration != nullptr);
-    assert(endOfLine != nullptr && endOfLine->Type == TokenType::EndOfLine);
+    assert(endOfLine != nullptr && endOfLine->Type() == TokenType::EndOfLine);
 }
 
 PropertyNode::PropertyNode(PropertyDeclarationNode* declaration, PropertyValueNode* value, Token* endOfLine):
@@ -19,7 +19,7 @@ PropertyNode::PropertyNode(PropertyDeclarationNode* declaration, PropertyValueNo
 {
     assert(declaration != nullptr);
     assert(value != nullptr);
-    assert(endOfLine != nullptr && endOfLine->Type == TokenType::EndOfLine);
+    assert(endOfLine != nullptr && endOfLine->Type() == TokenType::EndOfLine);
 }
 
 PropertyNode::PropertyNode(PropertyDeclarationNode* declaration, Token* endOfLine, PropertyBlockNode* block):
@@ -29,7 +29,7 @@ PropertyNode::PropertyNode(PropertyDeclarationNode* declaration, Token* endOfLin
         _block(block)
 {
     assert(declaration != nullptr);
-    assert(endOfLine != nullptr && endOfLine->Type == TokenType::EndOfLine);
+    assert(endOfLine != nullptr && endOfLine->Type() == TokenType::EndOfLine);
     assert(block != nullptr);
 }
 

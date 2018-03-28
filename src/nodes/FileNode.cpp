@@ -6,7 +6,7 @@ FileNode::FileNode(PropertyListNode* propertyList, Token* endOfInput):
         _endOfInput(endOfInput)
 {
     assert(propertyList != nullptr);
-    assert(endOfInput != nullptr && endOfInput->Type == TokenType::EndOfInput);
+    assert(endOfInput != nullptr && endOfInput->Type() == TokenType::EndOfInput);
 }
 
 FileNode::~FileNode()

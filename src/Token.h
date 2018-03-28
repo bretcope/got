@@ -62,15 +62,20 @@ inline const char* GetTokenTypeName(TokenType type)
 
 class Token final : public SyntaxElement
 {
-public:
-    const TokenType Type;
-    const FileSpan TriviaPosition;
-    const FileSpan Position;
+private:
+    const TokenType _type;
+    const FileSpan _trivia;
+    const FileSpan _text;
 
-    Token(TokenType type, FileSpan triviaPosition, FileSpan position);
+public:
+    Token(TokenType type, FileSpan trivia, FileSpan text);
     ~Token();
 
     bool IsToken() const final;
+
+    TokenType Type() const;
+    const FileSpan& Trivia() const;
+    const FileSpan& Text() const;
 
     void DebugPrint(FILE* stream, bool positions, bool color) const;
 
