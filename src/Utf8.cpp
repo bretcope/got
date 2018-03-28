@@ -1,6 +1,6 @@
 #include "Utf8.h"
 
-uint32_t Utf8::ExpectedSize(char firstByte)
+int Utf8::ExpectedSize(char firstByte)
 {
     const uint8_t MASK_1 =  0b10000000;
     const uint8_t MASK_2 =  0b11100000;
@@ -34,7 +34,7 @@ const uint32_t MAX_2_BYTE = 0x7FF;
 const uint32_t MAX_3_BYTE = 0xFFFF;
 const uint32_t MAX_4_BYTE = 0x10FFFF;
 
-uint32_t Utf8::EncodedSize(char32_t ch)
+int Utf8::EncodedSize(char32_t ch)
 {
     if (ch <= MAX_1_BYTE)
         return 1;
@@ -51,7 +51,7 @@ uint32_t Utf8::EncodedSize(char32_t ch)
     return 0;
 }
 
-uint32_t Utf8::Encode(char32_t ch, char* buffer)
+int Utf8::Encode(char32_t ch, char* buffer)
 {
     if (ch <= MAX_1_BYTE)
     {
