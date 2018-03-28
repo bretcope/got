@@ -13,7 +13,7 @@ RESOURCE name
 
 
 # basic include
-INCLUDE: .got_profile_a
+INCLUDE: ".got_profile_a\t\tstuff"
 
 # named include
 INCLUDE work: $work/GotConfig/.got_profile_work

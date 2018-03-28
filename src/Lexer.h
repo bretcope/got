@@ -23,7 +23,7 @@ private:
     TokenType _lastTokenType = TokenType::StartOfInput; ///< The last token type lexed.
 
 public:
-    const uint32_t SPACES_PER_INDENT = 4;
+    static const uint32_t SPACES_PER_INDENT = 4;
 
     explicit Lexer(FileContent* content);
     ~Lexer();

@@ -79,9 +79,20 @@ public:
 
     void DebugPrint(FILE* stream, bool positions, bool color) const;
 
-    // todo: char* ParseStringValue
     uint32_t LineNumber() const;
     uint32_t LineNumber(uint32_t& out_lineStart) const;
+
+    /**
+     * For text tokens, parses the intended literal string value of the token. Should not be called on non-text tokens.
+     * @param errStream Stream where error messages should be written.
+     * @param [out] out_value The string value of the token.
+     * @return True if successfully parsed.
+     */
+    bool ParseStringValue(FILE* errStream, char** out_value) const;
+
+private:
+    bool ParseQuotedText(FILE* errStream, char** out_value) const;
+    bool ParseBlockText(FILE* errStream, char** out_value) const;
 };
 
 

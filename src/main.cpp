@@ -55,6 +55,8 @@ int main(int argc, char** argv)
 //        std::cout.write(content, size);
         DebugLexer(content);
 //        DebugParser(content);
+
+        delete content;
     }
     else
     {
