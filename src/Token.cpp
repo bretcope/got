@@ -1,3 +1,4 @@
+#include <cassert>
 #include "Token.h"
 
 
@@ -6,6 +7,7 @@ Token::Token(TokenType type, FileSpan triviaPosition, FileSpan position):
         TriviaPosition(triviaPosition),
         Position(position)
 {
+    assert(triviaPosition.End() == position.Start());
 }
 
 Token::~Token() = default;
@@ -15,7 +17,7 @@ bool Token::IsToken() const
     return true;
 }
 
-void Token::DebugPrint(FILE* stream, const char* content, bool positions, bool color) const
+void Token::DebugPrint(FILE* stream, bool positions, bool color) const
 {
     auto reset = color ? "\033[0m" : "";
     auto boldGreen = color ? "\033[1;32m" : "";
@@ -39,11 +41,10 @@ void Token::DebugPrint(FILE* stream, const char* content, bool positions, bool c
         fprintf(stream, "%u:%u ", start, end);
     }
 
-    auto length = end - start;
-    if (length > 0 && Type != TokenType::EndOfLine)
+    if (Position.Length() > 0 && Type != TokenType::EndOfLine)
     {
         fprintf(stream, "%s", yellow);
-        fwrite(&content[start], 1, length, stream);
+        Position.Print(stream);
     }
 
     fprintf(stream, "%s\n", reset);

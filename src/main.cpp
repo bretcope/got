@@ -11,7 +11,7 @@ void DebugLexer(FileContent* content)
 
     while (auto token = lexer.Advance())
     {
-        token->DebugPrint(stdout, content->Data(), false, true);
+        token->DebugPrint(stdout, false, true);
         delete token;
     }
 }

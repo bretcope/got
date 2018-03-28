@@ -19,7 +19,7 @@ private:
     uint32_t _lineSpaces;       ///< The number of spaces before first non-space character on the current line. Used to detect indentation levels.
 
     Token* _nextToken = nullptr;                        ///< Next unconsumed token, stored here for peek operations.
-    FileSpan _trivia = {};                              ///< Span of leading trivia which will be attached to the next lexed token.
+    FileSpan _trivia;                                   ///< Span of leading trivia which will be attached to the next lexed token.
     TokenType _lastTokenType = TokenType::StartOfInput; ///< The last token type lexed.
 
 public:

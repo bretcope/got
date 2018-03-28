@@ -4,7 +4,8 @@
 Lexer::Lexer(FileContent* content):
     _content(content),
     _input(content->Data()),
-    _size(content->Size())
+    _size(content->Size()),
+    _trivia(content, 0, 0)
 {
     _content->ResetLineMarkers();
     StartNewLine(0);
@@ -407,6 +408,5 @@ Token* Lexer::NewToken(TokenType type, uint32_t length)
     auto end = start + length;
     _position = end;
     auto token = new Token(type, _trivia, FileSpan(_content, start, end));
-    _trivia = {};
     return token;
 }

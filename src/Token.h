@@ -72,7 +72,7 @@ public:
 
     bool IsToken() const final;
 
-    void DebugPrint(FILE* stream, const char* content, bool positions, bool color) const;
+    void DebugPrint(FILE* stream, bool positions, bool color) const;
 
     // todo: char* ParseStringValue
 };
