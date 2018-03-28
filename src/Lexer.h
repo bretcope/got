@@ -14,7 +14,7 @@ private:
     const char* _input;         ///< Raw binary representation of the file to lex (copy of _content->Data()). Encoding is expected to be UTF-8.
     uint32_t _position = 0;     ///< Current byte position in the input;
     uint32_t _size;             ///< The size (in bytes) of the input (copy of _content->Data()).
-    int _indentLevel = 0;       ///< Number of indent tokens which have been emitted, minus the number of outdent tokens emitted.
+    uint32_t _indentLevel = 0;  ///< Number of indent tokens which have been emitted, minus the number of outdent tokens emitted.
     uint32_t _lineStart;        ///< Byte position of the first character of the current line.
     uint32_t _lineSpaces;       ///< The number of spaces before first non-space character on the current line. Used to detect indentation levels.
 
@@ -23,7 +23,7 @@ private:
     TokenType _lastTokenType = TokenType::StartOfInput; ///< The last token type lexed.
 
 public:
-    const int SPACES_PER_INDENT = 4;
+    const uint32_t SPACES_PER_INDENT = 4;
 
     explicit Lexer(FileContent* content);
     ~Lexer();

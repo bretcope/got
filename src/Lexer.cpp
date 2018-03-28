@@ -209,12 +209,12 @@ Token* Lexer::LexIndentation()
 {
     assert(_lineSpaces != _indentLevel * Lexer::SPACES_PER_INDENT);
 
-    auto spaces = (int)_lineSpaces;
-    auto newLevel = spaces / Lexer::SPACES_PER_INDENT;
-    auto diff = newLevel - _indentLevel;
+    auto newLevel = _lineSpaces / Lexer::SPACES_PER_INDENT;
+    auto diff = (int32_t)newLevel - (int32_t)_indentLevel;
 
     if (diff < 0)
     {
+        assert(_indentLevel > 0);
         _indentLevel--;
         return NewToken(TokenType::Outdent, 0);
     }
