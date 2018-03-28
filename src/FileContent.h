@@ -28,7 +28,17 @@ public:
     const char* Data() const;
     uint32_t Size() const;
 
+    /**
+     * Returns the number of lines in the file.
+     */
     uint32_t LineCount() const;
+    /**
+     * Returns the line number (first line = 0) based on a byte offset from the start of the file.
+     * @param position Byte offset from the start of the file.
+     * @param [out] out_lineStart The byte offset of the start of the line (relative to the start of the file).
+     */
+    uint32_t LineNumber(uint32_t position, uint32_t& out_lineStart) const;
+
     void ResetLineMarkers();
     uint32_t MarkLine(uint32_t position);
 };

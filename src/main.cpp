@@ -11,7 +11,7 @@ void DebugLexer(FileContent* content)
 
     while (auto token = lexer.Advance())
     {
-        token->DebugPrint(stdout, false, true);
+        token->DebugPrint(stdout, true, true);
         delete token;
     }
 }
@@ -53,8 +53,8 @@ int main(int argc, char** argv)
     if (LoadFile(filename, MAX_SIZE, stderr, &content))
     {
 //        std::cout.write(content, size);
-//        DebugLexer(content);
-        DebugParser(content);
+        DebugLexer(content);
+//        DebugParser(content);
     }
     else
     {

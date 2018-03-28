@@ -80,6 +80,8 @@ public:
     void DebugPrint(FILE* stream, bool positions, bool color) const;
 
     // todo: char* ParseStringValue
+    uint32_t LineNumber() const;
+    uint32_t LineNumber(uint32_t& out_lineStart) const;
 };
 
 

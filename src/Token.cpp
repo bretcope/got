@@ -53,7 +53,9 @@ void Token::DebugPrint(FILE* stream, bool positions, bool color) const
 
     if (positions)
     {
-        fprintf(stream, "%u:%u ", start, end);
+        uint32_t lineStart;
+        auto lineNumber = LineNumber(lineStart) + 1;
+        fprintf(stream, "%u:%u ", lineNumber, start - lineStart + 1);
     }
 
     if (_text.Length() > 0 && _type != TokenType::EndOfLine)
@@ -63,4 +65,17 @@ void Token::DebugPrint(FILE* stream, bool positions, bool color) const
     }
 
     fprintf(stream, "%s\n", reset);
+}
+
+uint32_t Token::LineNumber() const
+{
+    auto textSpan = Text();
+    uint32_t lineStart;
+    return textSpan.Content()->LineNumber(textSpan.Start(), lineStart);
+}
+
+uint32_t Token::LineNumber(uint32_t& out_lineStart) const
+{
+    auto textSpan = Text();
+    return textSpan.Content()->LineNumber(textSpan.Start(), out_lineStart);
 }
