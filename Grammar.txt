@@ -89,7 +89,7 @@ QuotedText:     Quoted text begins with a double-quote ("), followed by zero or
                 escape sequences should be supported.
 
 BlockText:      Block text begins at a new line (LF or CRLF) immediately
-                following a greater-than (<) token. Each subsequent line is
+                following a greater-than (>) token. Each subsequent line is
                 considered part of the block text if it is blank, whitespace,
                 or indented at least four spaces more than the first line
                 (which had the ">"). The block terminates when a line is reached
