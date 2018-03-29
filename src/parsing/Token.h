@@ -3,9 +3,9 @@
 
 #include <cstdint>
 #include <cstdio>
-#include "MotString.h"
+#include "../io/MotString.h"
 #include "SyntaxElement.h"
-#include "FileSpan.h"
+#include "../io/FileSpan.h"
 
 enum class TokenType
 {

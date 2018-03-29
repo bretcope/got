@@ -1,9 +1,9 @@
 #include <iostream>
 #include <fstream>
 #include <locale>
-#include "FileReader.h"
-#include "Lexer.h"
-#include "Parser.h"
+#include "io/FileReader.h"
+#include "parsing/Lexer.h"
+#include "parsing/Parser.h"
 
 void DebugLexer(FileContent* content)
 {

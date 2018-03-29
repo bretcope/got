@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include "Token.h"
-#include "FileSpan.h"
+#include "../io/FileSpan.h"
 
 class Lexer
 {
