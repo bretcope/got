@@ -32,12 +32,21 @@ public:
      * Returns the number of lines in the file.
      */
     uint32_t LineCount() const;
+
     /**
-     * Returns the line number (first line = 0) based on a byte offset from the start of the file.
-     * @param position Byte offset from the start of the file.
-     * @param [out] out_lineStart The byte offset of the start of the line (relative to the start of the file).
+     * Returns details about a
+     * @param position A byte offset from the start of the file.
+     * @param [out] out_lineNumber If non-null, value is set to the line number of the position (first line = 0).
+     * @param [out] out_lineStart If non-null, value is set to the position of the start of the line (in bytes, relative to the start of the file).
+     * @param [out] out_column If non-null, value is set to the number of unicode characters which come before the current byte position. Since UTF-8
+     * characters can span multiple bytes, the column number may be less than the value of (position - out_lineStart).
      */
-    uint32_t LineNumber(uint32_t position, uint32_t& out_lineStart) const;
+    void PositionDetails(uint32_t position, uint32_t* out_lineNumber, uint32_t* out_lineStart, uint32_t* out_column) const;
+
+    /**
+     * Returns the starting position of a given line. If the line number is greater than the number of lines, the end position of the file is returned.
+     */
+    uint32_t LineStartPosition(uint32_t lineNumber) const;
 
     void ResetLineMarkers();
     uint32_t MarkLine(uint32_t position);

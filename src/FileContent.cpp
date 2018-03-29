@@ -37,17 +37,28 @@ uint32_t FileContent::LineCount() const
     return _lineCount;
 }
 
-uint32_t FileContent::LineNumber(uint32_t position, uint32_t& out_lineStart) const
+void FileContent::PositionDetails(uint32_t position, uint32_t* out_lineNumber, uint32_t* out_lineStart, uint32_t* out_column) const
 {
+    assert(out_lineNumber != nullptr || out_lineStart != nullptr || out_column != nullptr); // doesn't make sense to call this method if everything is null
+
     auto count = _lineCount;
     if (count == 0)
     {
-        out_lineStart = 0;
-        return 0;
+        if (out_lineNumber != nullptr)
+            *out_lineNumber = 0;
+
+        if (out_lineStart != nullptr)
+            *out_lineStart = 0;
+
+        if (out_column != nullptr)
+            *out_column = 0;
+
+        return;
     }
 
     auto lines = _lineStarts;
     assert(lines[0] == 0);
+    auto lineOffset = 0u;
 
     // perform binary search to find the line number
     auto i = count / 2;
@@ -58,8 +69,15 @@ uint32_t FileContent::LineNumber(uint32_t position, uint32_t& out_lineStart) con
 
         if (position >= start && (i + 1 == count || position < lines[i + 1]))
         {
-            out_lineStart = start;
-            return i;
+            if (out_lineNumber != nullptr)
+                *out_lineNumber = i;
+
+            if (out_lineStart != nullptr)
+                *out_lineStart = start;
+
+            lineOffset = start;
+
+            break;
         }
 
         if (position < start)
@@ -75,6 +93,21 @@ uint32_t FileContent::LineNumber(uint32_t position, uint32_t& out_lineStart) con
             i += (count - i) / 2;
         }
     }
+
+    if (out_column != nullptr)
+    {
+        // find character offset within line
+        // todo
+        assert(!"Column offset not Implemented");
+    }
+}
+
+uint32_t FileContent::LineStartPosition(uint32_t lineNumber) const
+{
+    if (lineNumber < _lineCount)
+        return _lineStarts[lineNumber];
+
+    return _size;
 }
 
 void FileContent::ResetLineMarkers()

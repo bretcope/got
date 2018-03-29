@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cstring>
+#include <algorithm>
 #include "Token.h"
 #include "Utf8.h"
 #include "Lexer.h"
@@ -57,13 +58,16 @@ void Token::DebugPrint(FILE* stream, bool positions, bool color) const
 
     if (positions)
     {
-        uint32_t lineStart;
-        auto lineNumber = LineNumber(lineStart) + 1;
+        // todo: use out_column param
+        uint32_t lineNumber, lineStart;
+        _text.Content()->PositionDetails(_text.Start(), &lineNumber, &lineStart, nullptr);
         fprintf(stream, "%u:%u ", lineNumber, start - lineStart + 1);
     }
 
     switch (_type)
     {
+        case TokenType::BlockText:
+            fprintf(stream, "\n");
         case TokenType::Word:
         case TokenType::LineText:
         case TokenType::QuotedText:
@@ -75,26 +79,9 @@ void Token::DebugPrint(FILE* stream, bool positions, bool color) const
                 delete literal;
             }
             break;
-        case TokenType::BlockText:
-            fprintf(stream, "%s", yellow);
-            _text.Print(stream);
-            break;
     }
 
     fprintf(stream, "%s\n", reset);
-}
-
-uint32_t Token::LineNumber() const
-{
-    auto textSpan = Text();
-    uint32_t lineStart;
-    return textSpan.Content()->LineNumber(textSpan.Start(), lineStart);
-}
-
-uint32_t Token::LineNumber(uint32_t& out_lineStart) const
-{
-    auto textSpan = Text();
-    return textSpan.Content()->LineNumber(textSpan.Start(), out_lineStart);
 }
 
 bool Token::ParseStringValue(FILE* errStream, char** out_value) const
@@ -220,8 +207,8 @@ bool Token::ParseQuotedText(FILE* errStream, char** out_value) const
         }
         else
         {
-            uint32_t lineStart;
-            auto lineNumber = LineNumber(lineStart);
+            uint32_t lineNumber, lineStart;
+            _text.Content()->PositionDetails(_text.Start(), &lineNumber, &lineStart, nullptr);
             fprintf(errStream, "Error: Unsupported escape sequence in quoted text\n");
             fprintf(errStream, "    at %s %u:%u\n", _text.Content()->Filename(), lineNumber, i - lineStart + 1);
             return false;
@@ -273,20 +260,82 @@ bool Token::ParseBlockText(FILE* errStream, char** out_value) const
 {
     assert(_type == TokenType::BlockText);
 
-    auto data = _text.Content()->Data();
-    auto start = _text.Start();
+    auto content = _text.Content();
+    auto data = content->Data();
+    auto rawStart = _text.Start();
     auto end = _text.End();
 
-    assert(data[start] == '>');
+    if (rawStart == end)
+    {
+        *out_value = new char[1] { '\0' };
+        return true;
+    }
+
+    assert(data[rawStart] == '\r' || data[rawStart] == '\n');
 
     // figure out the indent level
-//    uint32_t lineStart
-//
-//    auto spacesCount = _indentLevel * Lexer::SPACES_PER_INDENT;
+    uint32_t propertyLineNumber, propertyLineStart;
+    content->PositionDetails(rawStart, &propertyLineNumber, &propertyLineStart, nullptr);
+    auto spacesCount = 0u;
+    while (propertyLineStart + spacesCount < rawStart && data[propertyLineStart + spacesCount] == ' ')
+    {
+        spacesCount++;
+    }
 
-    // can figure out the number of characters in final string based on the number of lines the block spans
+    assert((spacesCount % Lexer::SPACES_PER_INDENT) == 0); // the lexer is supposed to emit errors for invalid indentation alignments
 
+    spacesCount += Lexer::SPACES_PER_INDENT; // add an additional level of indentation
 
-    *out_value = nullptr;
-    return false;
+    auto currLine = propertyLineNumber + 1;
+    auto currStart = content->LineStartPosition(currLine);
+
+    assert(currStart > rawStart);
+
+    // allocate a new string which includes enough room for all the indentation. This wastes a little bit of memory, but means we don't have to iterate
+    // through the lines of text twice.
+    auto resultCapacity = end - currStart + 1;
+    auto result = new char[resultCapacity];
+    auto ri = 0u;
+
+    while (currStart < end)
+    {
+        auto nextStart = content->LineStartPosition(currLine + 1);
+        assert(nextStart > currStart);
+
+        uint32_t copyCount;
+        uint32_t copyStart;
+        if (nextStart < end)
+        {
+            // this is not the final line of the block, so there's a line terminator we care about - let's find out how long it is
+            auto terminatorLength = data[nextStart - 1] == '\n' && nextStart - 2 >= currStart && data[nextStart - 2] == '\r' ? 2 : 1;
+            auto lineContentLength = nextStart - currStart - terminatorLength;
+            copyCount = terminatorLength + (lineContentLength > spacesCount ? lineContentLength - spacesCount : 0);
+            copyStart = nextStart - copyCount;
+        }
+        else
+        {
+            // this is the final line of the block, so we don't care about the line terminator
+            auto lineContentLength = end - currStart;
+            copyCount = lineContentLength > spacesCount ? lineContentLength - spacesCount : 0;
+            copyStart = end - copyCount;
+        }
+
+        if (copyCount > 0)
+        {
+            assert(ri + copyCount <= resultCapacity);
+            assert(copyStart + copyCount <= content->Size());
+            assert(copyStart + copyCount <= end);
+            memcpy(&result[ri], &data[copyStart], copyCount);
+        }
+
+        ri += copyCount;
+        currLine++;
+        currStart = nextStart;
+    }
+
+    assert(ri < resultCapacity);
+
+    result[ri] = '\0';
+    *out_value = result;
+    return true;
 }

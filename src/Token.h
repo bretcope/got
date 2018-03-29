@@ -81,9 +81,6 @@ public:
 
     void DebugPrint(FILE* stream, bool positions, bool color) const;
 
-    uint32_t LineNumber() const;
-    uint32_t LineNumber(uint32_t& out_lineStart) const;
-
     /**
      * For text tokens, parses the intended literal string value of the token. Should not be called on non-text tokens.
      * @param errStream Stream where error messages should be written.
