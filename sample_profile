@@ -43,7 +43,7 @@ REPO bosunreporter
     path: $csharp/BosunReporter
     alias bosun
     override: merge|replace
-    config >
+    config > # comments should work after the > symbol, but not within the block itself
         Literal text of .gitconfig if there is a local one in the repo
         This could be many lines
 

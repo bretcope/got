@@ -31,6 +31,7 @@ enum class TokenType
 
     // Symbols
     Colon,
+    GreaterThan,
 };
 
 inline const char* GetTokenTypeName(TokenType type)
@@ -55,6 +56,7 @@ inline const char* GetTokenTypeName(TokenType type)
         case TokenType::BlockText: return "BlockText";
 
         case TokenType::Colon: return "Colon";
+        case TokenType::GreaterThan: return "GreaterThan";
     }
 
     return "";

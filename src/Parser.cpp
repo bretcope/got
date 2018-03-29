@@ -209,15 +209,16 @@ bool Parser::ParsePropertyDeclaration(PropertyDeclarationNode** out_node)
 PropertyValue
     : quotedText
     : lineText
-    blockText
+    > blockText
  */
 bool Parser::ParsePropertyValue(PropertyValueNode** out_node)
 {
-    if (_lexer->PeekType() == TokenType::Colon)
+    auto peekType = _lexer->PeekType();
+    if (peekType == TokenType::Colon)
     {
         auto colon = _lexer->Advance();
 
-        auto peekType = _lexer->PeekType();
+        peekType = _lexer->PeekType();
         if (peekType == TokenType::LineText || peekType == TokenType::QuotedText)
         {
             auto text = _lexer->Advance();
@@ -228,14 +229,22 @@ bool Parser::ParsePropertyValue(PropertyValueNode** out_node)
         UnexpectedToken(TokenType::LineText, TokenType::QuotedText);
         delete colon;
     }
-    else
+    else if (peekType == TokenType::GreaterThan)
     {
+        auto greaterThan = _lexer->Advance();
+
         Token* blockText;
         if (RequireToken(TokenType::BlockText, &blockText))
         {
-            *out_node = new PropertyValueNode(blockText);
+            *out_node = new PropertyValueNode(greaterThan, blockText);
             return true;
         }
+
+        delete greaterThan;
+    }
+    else
+    {
+        UnexpectedToken(TokenType::Colon, TokenType::GreaterThan);
     }
 
     *out_node = nullptr;

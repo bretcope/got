@@ -76,7 +76,9 @@ static inline bool IsNewLine(char ch)
 
 Token* Lexer::Lex()
 {
-    if (_lastTokenType == TokenType::EndOfInput)
+    auto lastTokenType = _lastTokenType;
+
+    if (lastTokenType == TokenType::EndOfInput)
         return nullptr;
 
     ConsumeTrivia();
@@ -86,7 +88,7 @@ Token* Lexer::Lex()
     if (pos >= _size)
         return LexEndOfInput();
 
-    switch (_lastTokenType)
+    switch (lastTokenType)
     {
         case TokenType::StartOfInput:
         case TokenType::EndOfLine:
@@ -120,14 +122,17 @@ Token* Lexer::Lex()
         case ':':
             return NewToken(TokenType::Colon, 1);
         case '>':
-            return LexBlockText();
+            return NewToken(TokenType::GreaterThan, 1);
         case '"':
             return LexQuotedText();
         case '\r':
         case '\n':
+            if (lastTokenType == TokenType::GreaterThan)
+                return LexBlockText();
+
             return LexEndOfLine(ch);
         default:
-            if (_lastTokenType == TokenType::Colon)
+            if (lastTokenType == TokenType::Colon)
                 return LexLineText();
 
             if (IsAlpha(ch))
@@ -191,6 +196,9 @@ Token* Lexer::LexEndOfInput()
     assert(_position == _size);
 
     auto lastTokenType = _lastTokenType;
+    if (lastTokenType == TokenType::GreaterThan)
+        return LexBlockText();
+
     if (lastTokenType == TokenType::EndOfLine || lastTokenType == TokenType::Outdent)
     {
         if (_indentLevel > 0)
@@ -331,18 +339,12 @@ Token* Lexer::LexQuotedText()
 
 Token* Lexer::LexBlockText()
 {
-    assert(_input[_position] == '>');
+    assert(_position == _size || _input[_position] == '\r' || _input[_position] == '\n');
 
     auto start = _position;
-    auto end = start + 1;
+    auto end = start;
     auto size = _size;
     auto input = _input;
-
-    // advance pos until we get to the end of first line
-    while (end < size && !IsNewLine(input[end]))
-    {
-        end++;
-    }
 
     // figure out which (if any) following lines are part of the block text
     auto requiredSpaces = (_indentLevel + 1) * Lexer::SPACES_PER_INDENT;

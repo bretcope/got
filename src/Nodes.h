@@ -123,12 +123,11 @@ public:
 
 class PropertyValueNode final : public Node
 {
-    Token* _colon;
+    Token* _specifier;
     Token* _text;
 
 public:
-    explicit PropertyValueNode(Token* blockText);
-    PropertyValueNode(Token* colon, Token* text);
+    PropertyValueNode(Token* specifier, Token* text);
     ~PropertyValueNode();
 
     NodeType Type() const override;

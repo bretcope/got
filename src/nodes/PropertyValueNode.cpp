@@ -1,24 +1,23 @@
 #include <cassert>
 #include "../Nodes.h"
 
-PropertyValueNode::PropertyValueNode(Token* blockText):
-        _colon(nullptr),
-        _text(blockText)
-{
-    assert(blockText != nullptr && blockText->Type() == TokenType::BlockText);
-}
-
-PropertyValueNode::PropertyValueNode(Token* colon, Token* text):
-        _colon(colon),
+PropertyValueNode::PropertyValueNode(Token* specifier, Token* text):
+        _specifier(specifier),
         _text(text)
 {
-    assert(colon != nullptr && colon->Type() == TokenType::Colon);
-    assert(text != nullptr && (text->Type() == TokenType::LineText || text->Type() == TokenType::QuotedText));
+    assert(specifier != nullptr);
+    assert(text != nullptr);
+
+    assert(specifier->Type() == TokenType::Colon || specifier->Type() == TokenType::GreaterThan);
+    assert(text->Type() == TokenType::LineText || text->Type() == TokenType::QuotedText || text->Type() == TokenType::BlockText);
+
+    assert((specifier->Type() == TokenType::Colon) ^ (text->Type() != TokenType::LineText && text->Type() != TokenType::QuotedText));
+    assert((specifier->Type() == TokenType::GreaterThan) ^ (text->Type() != TokenType::BlockText));
 }
 
 PropertyValueNode::~PropertyValueNode()
 {
-    delete _colon;
+    delete _specifier;
     delete _text;
 }
 
@@ -29,8 +28,6 @@ NodeType PropertyValueNode::Type() const
 
 void PropertyValueNode::IterateSyntaxElements(std::function<void(const SyntaxElement*)> callback) const
 {
-    if (_colon != nullptr)
-        callback(_colon);
-
+    callback(_specifier);
     callback(_text);
 }
