@@ -75,10 +75,9 @@ void Token::DebugPrint(FILE* stream, bool positions, bool color) const
 
     if (positions)
     {
-        // todo: use out_column param
-        uint32_t lineNumber, lineStart;
-        _text.Content()->PositionDetails(start, &lineNumber, &lineStart, nullptr);
-        fprintf(stream, "%u:%u ", lineNumber, start - lineStart + 1);
+        uint32_t lineNumber, lineStart, column;
+        _text.Content()->PositionDetails(start, &lineNumber, &lineStart, &column);
+        fprintf(stream, "%u:%u ", lineNumber, column + 1);
     }
 
     if (_value != nullptr)

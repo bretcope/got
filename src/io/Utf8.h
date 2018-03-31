@@ -23,6 +23,11 @@ namespace Utf8
      * @return The number of bytes written. Returns zero (and writes nothing) if the character is outside the unicode range.
      */
     int Encode(char32_t ch, char* buffer);
+
+    /**
+     * Returns the number of unicode characters in the given sequence of bytes. Byte sequences which are not valid UTF-8 are counted per byte.
+     */
+    uint32_t CountCharacters(const char* data, uint32_t byteLength);
 }
 
 

@@ -2,6 +2,7 @@
 #include <cstring>
 #include <cassert>
 #include "FileContent.h"
+#include "Utf8.h"
 
 FileContent::FileContent(char* filename, char* data, uint32_t size):
         _filename(filename),
@@ -58,7 +59,7 @@ void FileContent::PositionDetails(uint32_t position, uint32_t* out_lineNumber, u
 
     auto lines = _lineStarts;
     assert(lines[0] == 0);
-    auto lineOffset = 0u;
+    auto lineStart = 0u;
 
     // perform binary search to find the line number
     auto i = count / 2;
@@ -75,7 +76,7 @@ void FileContent::PositionDetails(uint32_t position, uint32_t* out_lineNumber, u
             if (out_lineStart != nullptr)
                 *out_lineStart = start;
 
-            lineOffset = start;
+            lineStart = start;
 
             break;
         }
@@ -94,11 +95,14 @@ void FileContent::PositionDetails(uint32_t position, uint32_t* out_lineNumber, u
         }
     }
 
+    assert(position >= lineStart);
+    assert(_size >= lineStart);
+
     if (out_column != nullptr)
     {
         // find character offset within line
-        // todo
-        assert(!"Column offset not Implemented");
+        auto length = std::min(position, _size) - lineStart;
+        *out_column = length == 0 ? 0 : Utf8::CountCharacters(&_data[lineStart], length);
     }
 }
 

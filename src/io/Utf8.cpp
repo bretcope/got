@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "Utf8.h"
 
 int Utf8::ExpectedSize(char firstByte)
@@ -84,4 +85,32 @@ int Utf8::Encode(char32_t ch, char* buffer)
     }
 
     return 0;
+}
+
+uint32_t Utf8::CountCharacters(const char* data, uint32_t byteLength)
+{
+    auto i = 0u;
+
+    // quick optimization for ASCII-heavy files
+    while (i + 8 <= byteLength)
+    {
+        if ((*(uint64_t*)&data[i] & 0x8080808080808080ull) == 0ull)
+        {
+            i += 8;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    auto count = i;
+    while (i < byteLength)
+    {
+        auto byte = (unsigned char)data[i];
+        i += std::max(1, ExpectedSize(byte));
+        count++;
+    }
+
+    return count;
 }
