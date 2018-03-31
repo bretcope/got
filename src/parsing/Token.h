@@ -68,9 +68,10 @@ private:
     const TokenType _type;
     const FileSpan _trivia;
     const FileSpan _text;
+    MotString* _value;
 
 public:
-    Token(TokenType type, FileSpan trivia, FileSpan text);
+    Token(TokenType type, FileSpan trivia, FileSpan text, MotString* value = nullptr);
     ~Token();
 
     bool IsToken() const final;
@@ -81,17 +82,7 @@ public:
 
     void DebugPrint(FILE* stream, bool positions, bool color) const;
 
-    /**
-     * For text tokens, parses the intended literal string value of the token. Should not be called on non-text tokens.
-     * @param errStream Stream where error messages should be written.
-     * @param [out] out_value The string value of the token.
-     * @return True if successfully parsed.
-     */
-    bool ParseStringValue(FILE* errStream, MotString** out_value) const;
-
-private:
-    bool ParseQuotedText(FILE* errStream, MotString** out_value) const;
-    bool ParseBlockText(FILE* errStream, MotString** out_value) const;
+    const MotString* Value() const;
 };
 
 

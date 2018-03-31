@@ -7,7 +7,7 @@
 
 void DebugLexer(FileContent* content)
 {
-    auto lexer = Lexer(content);
+    auto lexer = Lexer(content, stderr);
 
     while (auto token = lexer.Advance())
     {

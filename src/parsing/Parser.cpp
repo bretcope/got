@@ -39,7 +39,7 @@ Parser::~Parser() = default;
 
 bool ParseConfigurationFile(FileContent* content, FILE* errStream, FileNode** out_tree)
 {
-    Lexer lexer(content);
+    Lexer lexer(content, errStream);
     Parser parser(&lexer, content, errStream);
 
     return parser.ParseFile(out_tree);
