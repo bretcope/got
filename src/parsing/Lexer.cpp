@@ -461,8 +461,32 @@ bool Lexer::ParseEscapeSequence(uint32_t position, char32_t& out_char, int& out_
             out_escapeLength = 2;
             return true;
         case 'u':
-            // todo: UTF-32
-            break;
+        {
+            auto digits = 0;
+            char32_t value = 0u;
+            for (auto i = position + 2; digits < 6 && i < size; i++, digits++)
+            {
+                auto ch = input[i];
+                if (ch >= '0' && ch <= '9')
+                {
+                    value = (value << 4) | (ch - 0x30u);
+                    continue;
+                }
+
+                ch &= ~0x20u; // to uppercase
+                if (ch >= 'A' && ch <= 'F')
+                {
+                    value = (value << 4) | (ch - 'A' + 10);
+                    continue;
+                }
+
+                break;
+            }
+
+            out_char = value;
+            out_escapeLength = 2 + digits;
+            return digits > 0;
+        }
     }
 
     return false;
