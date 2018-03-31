@@ -87,11 +87,11 @@ public:
      * @param [out] out_value The string value of the token.
      * @return True if successfully parsed.
      */
-    bool ParseStringValue(FILE* errStream, char** out_value) const;
+    bool ParseStringValue(FILE* errStream, MotString** out_value) const;
 
 private:
-    bool ParseQuotedText(FILE* errStream, char** out_value) const;
-    bool ParseBlockText(FILE* errStream, char** out_value) const;
+    bool ParseQuotedText(FILE* errStream, MotString** out_value) const;
+    bool ParseBlockText(FILE* errStream, MotString** out_value) const;
 };
 
 

@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstdio>
 #include "FileContent.h"
+#include "MotString.h"
 
 class FileSpan
 {
@@ -46,9 +47,9 @@ public:
     size_t Print(FILE* stream) const;
 
     /**
-     * Allocates a new null-terminated string which represents filled with the content of the span.
+     * Allocates a new MotString which represents the content of the span.
      */
-    char* NewString() const;
+    MotString* NewMotString() const;
 };
 
 #endif //MOT_SPAN_H

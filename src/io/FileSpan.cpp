@@ -55,14 +55,20 @@ size_t FileSpan::Print(FILE* stream) const
     return fwrite(&_content->Data()[_start], 1, length, stream);
 }
 
-char* FileSpan::NewString() const
+MotString* FileSpan::NewMotString() const
 {
     auto length = Length();
-    auto str = new char[length + 1];
+    char* str;
 
     if (length > 0)
+    {
+        str = new char[length];
         memcpy(str, &_content->Data()[_start], length);
+    }
+    else
+    {
+        str = nullptr;
+    }
 
-    str[length] = '\0';
-    return str;
+    return new MotString(str, length, true);
 }

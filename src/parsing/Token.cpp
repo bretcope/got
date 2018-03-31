@@ -71,11 +71,12 @@ void Token::DebugPrint(FILE* stream, bool positions, bool color) const
         case TokenType::Word:
         case TokenType::LineText:
         case TokenType::QuotedText:
-            char* literal;
+            MotString* literal;
             fprintf(stream, "%s", red); // in case there's an error
             if (ParseStringValue(stream, &literal))
             {
-                fprintf(stream, "%s%s", yellow, literal);
+                fprintf(stream, "%s", yellow);
+                literal->Print(stream);
                 delete literal;
             }
             break;
@@ -84,7 +85,7 @@ void Token::DebugPrint(FILE* stream, bool positions, bool color) const
     fprintf(stream, "%s\n", reset);
 }
 
-bool Token::ParseStringValue(FILE* errStream, char** out_value) const
+bool Token::ParseStringValue(FILE* errStream, MotString** out_value) const
 {
     switch (_type)
     {
@@ -94,10 +95,8 @@ bool Token::ParseStringValue(FILE* errStream, char** out_value) const
             return ParseBlockText(errStream, out_value);
         case TokenType::Word:
         case TokenType::LineText:
-        {
-            *out_value = _text.NewString();
+            *out_value = _text.NewMotString();
             return true;
-        }
         default:
             fprintf(errStream, "Error: ParseStringValue called on token type %s\n", GetTokenTypeName(_type));
             *out_value = nullptr;
@@ -170,7 +169,7 @@ bool ParseEscapeSequence(const char* str, uint32_t index, uint32_t length, char3
     return false;
 }
 
-bool Token::ParseQuotedText(FILE* errStream, char** out_value) const
+bool Token::ParseQuotedText(FILE* errStream, MotString** out_value) const
 {
     assert(_type == TokenType::QuotedText);
     assert(_text.Content()->Data()[_text.Start()] == '"');
@@ -215,7 +214,7 @@ bool Token::ParseQuotedText(FILE* errStream, char** out_value) const
         }
     }
 
-    auto result = new char[finalLength + 1];
+    auto result = new char[finalLength];
 
     if (hasEscapes)
     {
@@ -251,12 +250,11 @@ bool Token::ParseQuotedText(FILE* errStream, char** out_value) const
         memcpy(result, &data[start], rawLength);
     }
 
-    result[finalLength] = '\0';
-    *out_value = result;
+    *out_value = new MotString(result, finalLength, true);
     return true;
 }
 
-bool Token::ParseBlockText(FILE* errStream, char** out_value) const
+bool Token::ParseBlockText(FILE* errStream, MotString** out_value) const
 {
     assert(_type == TokenType::BlockText);
 
@@ -267,7 +265,7 @@ bool Token::ParseBlockText(FILE* errStream, char** out_value) const
 
     if (rawStart == end)
     {
-        *out_value = new char[1] { '\0' };
+        *out_value = new MotString(nullptr, 0, false);
         return true;
     }
 
@@ -335,7 +333,6 @@ bool Token::ParseBlockText(FILE* errStream, char** out_value) const
 
     assert(ri < resultCapacity);
 
-    result[ri] = '\0';
-    *out_value = result;
+    *out_value = new MotString(result, ri, true);
     return true;
 }

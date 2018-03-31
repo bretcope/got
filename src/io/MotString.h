@@ -3,27 +3,35 @@
 
 
 #include <cstdlib>
+#include <cstdint>
+#include <cstdio>
 
 class MotString
 {
 private:
-    char* _data;
-    size_t _byteCount;
+    const char* _data;
+    uint32_t _byteCount;
+    mutable uint32_t _hashCode = 0; // lazy loaded
+    bool _isOwnerOfData;
 
 public:
     /**
      *
      * @param data The raw UTF-8 string.
      * @param byteCount The number of bytes which are meaningful (excludes the null terminator).
+     * @param transferOwnership If true, the data will be deallocated when the MotString is destructed.
      */
-    MotString(char* data, size_t byteCount);
+    MotString(const char* data, uint32_t byteCount, bool transferOwnership);
     ~MotString();
 
     const char* Value() const;
     /**
      * Returns the number of bytes which are meaningful (excludes the null terminator).
      */
-    size_t ByteLength() const;
+    uint32_t ByteLength() const;
+
+    uint32_t HashCode() const;
+    void Print(FILE* stream) const;
 };
 
 
