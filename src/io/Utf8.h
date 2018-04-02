@@ -25,6 +25,11 @@ namespace Utf8
     int Encode(char32_t ch, char* buffer);
 
     /**
+     * Decodes a UTF-8 code point, and returns the number of bytes consumed. Zero is returned for invalid code points.
+     */
+    int Decode(const char* str, uint32_t position, uint32_t size, char32_t& out_char);
+
+    /**
      * Returns the number of unicode characters in the given sequence of bytes. Byte sequences which are not valid UTF-8 are counted per byte.
      */
     uint32_t CountCharacters(const char* data, uint32_t byteLength);
