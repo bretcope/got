@@ -27,6 +27,7 @@ add_executable(cmot
                src/io/MotString.cpp
                src/io/MotString.h
                src/io/Utf8.cpp
+               src/io/Utf8.Gen.cpp
                src/io/Utf8.h
                src/parsing/Lexer.cpp
                src/parsing/Lexer.h

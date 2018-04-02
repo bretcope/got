@@ -33,6 +33,16 @@ namespace Utf8
      * Returns the number of unicode characters in the given sequence of bytes. Byte sequences which are not valid UTF-8 are counted per byte.
      */
     uint32_t CountCharacters(const char* data, uint32_t byteLength);
+
+    /**
+     * Returns the uppercase variant of the code point. If no conversion is applicable, the original character is returned.
+     */
+    char32_t ToUpper(char32_t ch);
+
+    /**
+     * Returns the lowercase variant of the code point. If no conversion is applicable, the original character is returned.
+     */
+    char32_t ToLower(char32_t ch);
 }
 
 
