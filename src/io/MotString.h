@@ -24,7 +24,6 @@ public:
     MotString(const char* data, uint32_t byteCount, bool transferOwnership);
     ~MotString();
 
-    const char* Value() const;
     /**
      * Returns the number of bytes which are meaningful (excludes the null terminator).
      */

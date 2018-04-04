@@ -15,11 +15,6 @@ MotString::~MotString()
         delete (char*)_data;
 }
 
-const char* MotString::Value() const
-{
-    return _data;
-}
-
 uint32_t MotString::ByteLength() const
 {
     return _byteCount;
