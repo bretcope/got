@@ -31,7 +31,14 @@ public:
      */
     uint32_t ByteLength() const;
 
+    /**
+     * Returns a case-insensitive hash code for the string.
+     */
     uint32_t HashCode() const;
+
+    /**
+     * Prints the string to a file stream.
+     */
     void Print(FILE* stream) const;
 };
 

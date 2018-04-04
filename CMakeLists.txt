@@ -17,6 +17,9 @@ elseif(UNIX)
     add_definitions(-DUNIX)
 endif()
 
+# currently, we're only building for little endian, so I'm just hard-coding this
+add_definitions(-DMOT_BIG_ENDIAN=0)
+
 add_executable(cmot
                src/io/FileContent.cpp
                src/io/FileContent.h

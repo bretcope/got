@@ -4,6 +4,7 @@
 #include "io/FileReader.h"
 #include "parsing/Lexer.h"
 #include "parsing/Parser.h"
+#include "io/Utf8.h"
 
 void DebugLexer(FileContent* content)
 {
@@ -46,6 +47,25 @@ int main(int argc, char** argv)
     const char* os = "Unknown";
 #endif
 
+    auto one = MotString::NewFromConstant("one");
+    auto ONE = MotString::NewFromConstant("ONE");
+    auto OnE = MotString::NewFromConstant("OnE");
+    auto two = MotString::NewFromConstant("two");
+
+    auto RU = MotString::NewFromConstant("heyП");
+    auto ru = MotString::NewFromConstant("heyп");
+
+    std::cout << one->HashCode() << "\n";
+    std::cout << ONE->HashCode() << "\n";
+    std::cout << OnE->HashCode() << "\n";
+    std::cout << two->HashCode() << "\n";
+    std::cout << RU->HashCode() << "\n";
+    std::cout << ru->HashCode() << "\n";
+
+    delete one, ONE, OnE, two, RU, ru;
+
+    return 0;
+
     const char* filename = "sample_profile";
 
     FileContent* content;
@@ -53,8 +73,8 @@ int main(int argc, char** argv)
     if (LoadFile(filename, MAX_SIZE, stderr, &content))
     {
 //        std::cout.write(content, size);
-        DebugLexer(content);
-//        DebugParser(content);
+//        DebugLexer(content);
+        DebugParser(content);
 
         delete content;
     }
