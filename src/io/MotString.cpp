@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cstring>
 #include "MotString.h"
 
 MotString::MotString(const char* data, uint32_t byteCount, bool transferOwnership):
@@ -13,6 +14,12 @@ MotString::~MotString()
 {
     if (_isOwnerOfData)
         delete (char*)_data;
+}
+
+MotString* MotString::NewFromConstant(const char* str)
+{
+    auto len = (uint32_t)strlen(str);
+    return new MotString(str, len, false);
 }
 
 uint32_t MotString::ByteLength() const
