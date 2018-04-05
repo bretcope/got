@@ -12,16 +12,65 @@ MotString::MotString(const char* data, uint32_t byteCount, bool transferOwnershi
     assert(byteCount == 0 || data != nullptr);
 }
 
+MotString::MotString(const char* str)
+{
+    _data = str;
+    _byteCount = (uint32_t)strlen(str);
+    _isOwnerOfData = false;
+}
+
+MotString::MotString(const MotString& other)
+{
+    auto data = other._data;
+    auto len = other._byteCount;
+    auto owner = other._isOwnerOfData;
+
+    if (owner && len > 0)
+    {
+        // need to make a copy of the data
+        auto newData = new char[len];
+        memcpy(newData, data, len);
+        data = newData;
+    }
+
+    _data = data;
+    _byteCount = len;
+    _hashCode = other._hashCode;
+    _charCount = other._charCount;
+    _isOwnerOfData = owner;
+}
+
+MotString::MotString(MotString&& other) noexcept
+{
+    _data = other._data;
+    _byteCount = other._byteCount;
+    _hashCode = other._hashCode;
+    _charCount = other._charCount;
+    _isOwnerOfData = other._isOwnerOfData;
+
+    other._data = nullptr;
+}
+
 MotString::~MotString()
 {
     if (_isOwnerOfData)
         delete (char*)_data;
 }
 
-MotString* MotString::NewFromConstant(const char* str)
+MotString& MotString::operator=(MotString rhs) noexcept
 {
-    auto len = (uint32_t)strlen(str);
-    return new MotString(str, len, false);
+    swap(*this, rhs);
+    return *this;
+}
+
+void swap(MotString& a, MotString& b) noexcept
+{
+    using std::swap;
+    swap(a._data, b._data);
+    swap(a._byteCount, b._byteCount);
+    swap(a._hashCode, b._hashCode);
+    swap(a._charCount, b._charCount);
+    swap(a._isOwnerOfData, b._isOwnerOfData);
 }
 
 uint32_t MotString::ByteLength() const
@@ -92,6 +141,11 @@ int MotString::CompareImpl(const MotString* a, const MotString* b, bool caseSens
 {
     if (a == b)
         return 0;
+
+    if (a == nullptr || b == nullptr)
+    {
+        return a == nullptr ? 1 : -1; // we're going to say that any value comes before null
+    }
 
     auto aLen = a->_byteCount;
     auto bLen = b->_byteCount;

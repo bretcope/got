@@ -47,27 +47,27 @@ int main(int argc, char** argv)
     const char* os = "Unknown";
 #endif
 
-    auto one = MotString::NewFromConstant("one");
-    auto ONE = MotString::NewFromConstant("ONE");
-    auto OnE = MotString::NewFromConstant("OnE");
-    auto two = MotString::NewFromConstant("two");
+    MotString one("one");
+    MotString ONE("ONE");
+    MotString OnE("OnE");
+    MotString two("two");
 
-    auto RU = MotString::NewFromConstant("heyП");
-    auto ru = MotString::NewFromConstant("heyп");
+    MotString RU("heyП");
+    MotString ru("heyп");
 
-    std::cout << one->HashCode() << "\n";
-    std::cout << ONE->HashCode() << "\n";
-    std::cout << OnE->HashCode() << "\n";
-    std::cout << two->HashCode() << "\n";
-    std::cout << RU->HashCode() << "\n";
-    std::cout << ru->HashCode() << "\n";
+    std::cout << one.HashCode() << "\n";
+    std::cout << ONE.HashCode() << "\n";
+    std::cout << OnE.HashCode() << "\n";
+    std::cout << two.HashCode() << "\n";
+    std::cout << RU.HashCode() << "\n";
+    std::cout << ru.HashCode() << "\n";
 
-    std::cout << MotString::Compare(one, ONE) << "\n";
-    std::cout << MotString::CompareCaseInsensitive(one, ONE) << "\n";
-    std::cout << MotString::CompareCaseInsensitive(one, OnE) << "\n";
-    std::cout << MotString::CompareCaseInsensitive(one, two) << "\n";
-
-    delete one, ONE, OnE, two, RU, ru;
+    std::cout << MotString::Compare(&one, &ONE) << "\n";
+    std::cout << MotString::CompareCaseInsensitive(&one, &ONE) << "\n";
+    std::cout << MotString::CompareCaseInsensitive(&one, &OnE) << "\n";
+    std::cout << MotString::CompareCaseInsensitive(&one, &two) << "\n";
+    std::cout << MotString::Compare(&RU, &ru) << "\n";
+    std::cout << MotString::CompareCaseInsensitive(&RU, &ru) << "\n";
 
     return 0;
 

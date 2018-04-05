@@ -23,9 +23,20 @@ public:
      * @param transferOwnership If true, the data will be deallocated when the MotString is destructed.
      */
     MotString(const char* data, uint32_t byteCount, bool transferOwnership);
+    /**
+     * Creates a MotString based off of a null-terminated C string.
+     *
+     * \warning The MotString does not control the lifetime of the C string. This constructor is primarily intended for creating MotStrings based off of
+     * string literals.
+     */
+    explicit MotString(const char* str);
+    MotString(const MotString&);
+    MotString(MotString&&) noexcept;
     ~MotString();
 
-    static MotString* NewFromConstant(const char* str);
+    MotString& operator=(MotString) noexcept;
+
+    friend void swap(MotString& a, MotString& b) noexcept;
 
     /**
      * Returns the number of bytes which are meaningful (excludes the null terminator).
