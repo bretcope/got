@@ -62,6 +62,11 @@ int main(int argc, char** argv)
     std::cout << RU->HashCode() << "\n";
     std::cout << ru->HashCode() << "\n";
 
+    std::cout << MotString::Compare(one, ONE) << "\n";
+    std::cout << MotString::CompareCaseInsensitive(one, ONE) << "\n";
+    std::cout << MotString::CompareCaseInsensitive(one, OnE) << "\n";
+    std::cout << MotString::CompareCaseInsensitive(one, two) << "\n";
+
     delete one, ONE, OnE, two, RU, ru;
 
     return 0;
