@@ -1,6 +1,8 @@
 #include "io/MotString.h"
 #include "gtest/gtest.h"
 
+using mot::MotString;
+
 TEST(MotString, LiteralEquality)
 {
     {

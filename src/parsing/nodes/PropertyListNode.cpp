@@ -1,47 +1,50 @@
 #include <cassert>
 #include "../Nodes.h"
 
-PropertyListNode::PropertyListNode(PropertyNode** properties, int count):
-        _properties(properties),
-        _count(count)
+namespace mot
 {
-    assert(properties != nullptr || count == 0);
-}
-
-PropertyListNode::~PropertyListNode()
-{
-    auto props = _properties;
-    auto count = _count;
-    for (auto i = 0; i < count; i++)
+    PropertyListNode::PropertyListNode(PropertyNode** properties, int count) :
+            _properties(properties),
+            _count(count)
     {
-        delete props[i];
+        assert(properties != nullptr || count == 0);
     }
 
-    delete props;
-}
-
-NodeType PropertyListNode::Type() const
-{
-    return NodeType::PropertyList;
-}
-
-void PropertyListNode::IterateSyntaxElements(std::function<void(const SyntaxElement*)> callback) const
-{
-    auto props = _properties;
-    auto count = _count;
-
-    for (auto i = 0; i < count; i++)
+    PropertyListNode::~PropertyListNode()
     {
-        callback(props[i]);
+        auto props = _properties;
+        auto count = _count;
+        for (auto i = 0; i < count; i++)
+        {
+            delete props[i];
+        }
+
+        delete props;
     }
-}
 
-const PropertyNode* PropertyListNode::GetProperty(int index) const
-{
-    return _properties[index];
-}
+    NodeType PropertyListNode::Type() const
+    {
+        return NodeType::PropertyList;
+    }
 
-int PropertyListNode::Count() const
-{
-    return _count;
+    void PropertyListNode::IterateSyntaxElements(std::function<void(const SyntaxElement*)> callback) const
+    {
+        auto props = _properties;
+        auto count = _count;
+
+        for (auto i = 0; i < count; i++)
+        {
+            callback(props[i]);
+        }
+    }
+
+    const PropertyNode* PropertyListNode::GetProperty(int index) const
+    {
+        return _properties[index];
+    }
+
+    int PropertyListNode::Count() const
+    {
+        return _count;
+    }
 }

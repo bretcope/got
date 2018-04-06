@@ -1,49 +1,52 @@
 #include "../Nodes.h"
 
-bool Node::IsToken() const
+namespace mot
 {
-    return false;
-}
-
-int Node::VisitTokens(std::function<void(const Token*)> callback) const
-{
-    auto count = 0;
-    std::function<void (const SyntaxElement*)> visitCallack = [&] (const SyntaxElement* element) -> void
+    bool Node::IsToken() const
     {
-        if (element->IsToken())
-        {
-            callback((Token*)element);
-            count++;
-        }
-        else if (element->IsNode())
-        {
-            ((Node*)element)->IterateSyntaxElements(visitCallack);
-        }
-    };
+        return false;
+    }
 
-    IterateSyntaxElements(visitCallack);
-    return count;
-}
-
-int Node::VisitNodes(std::function<void(const Node* node, int level)> callback) const
-{
-    callback(this, 0);
-    auto count = 1;
-    auto level = 1;
-
-    std::function<void (const SyntaxElement*)> visitCallback = [&] (const SyntaxElement* element) -> void
+    int Node::VisitTokens(std::function<void(const Token*)> callback) const
     {
-        if (element->IsNode())
+        auto count = 0;
+        std::function<void(const SyntaxElement*)> visitCallack = [&](const SyntaxElement* element) -> void
         {
-            auto node = (Node*)element;
-            callback(node, level);
-            count++;
-            level++;
-            node->IterateSyntaxElements(visitCallback);
-            level--;
-        }
-    };
+            if (element->IsToken())
+            {
+                callback((Token*)element);
+                count++;
+            }
+            else if (element->IsNode())
+            {
+                ((Node*)element)->IterateSyntaxElements(visitCallack);
+            }
+        };
 
-    IterateSyntaxElements(visitCallback);
-    return count;
+        IterateSyntaxElements(visitCallack);
+        return count;
+    }
+
+    int Node::VisitNodes(std::function<void(const Node* node, int level)> callback) const
+    {
+        callback(this, 0);
+        auto count = 1;
+        auto level = 1;
+
+        std::function<void(const SyntaxElement*)> visitCallback = [&](const SyntaxElement* element) -> void
+        {
+            if (element->IsNode())
+            {
+                auto node = (Node*)element;
+                callback(node, level);
+                count++;
+                level++;
+                node->IterateSyntaxElements(visitCallback);
+                level--;
+            }
+        };
+
+        IterateSyntaxElements(visitCallback);
+        return count;
+    }
 }

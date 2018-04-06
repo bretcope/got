@@ -6,6 +6,8 @@
 #include "parsing/Parser.h"
 #include "io/Utf8.h"
 
+using namespace mot;
+
 void DebugLexer(FileContent* content)
 {
     auto lexer = Lexer(content, stderr);

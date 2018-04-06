@@ -6,50 +6,54 @@
 #include "FileContent.h"
 #include "MotString.h"
 
-class FileSpan
+namespace mot
 {
-private:
-    const FileContent* _content;
-    uint32_t _start;
-    uint32_t _end;
+    class FileSpan
+    {
+    private:
+        const FileContent* _content;
+        uint32_t _start;
+        uint32_t _end;
 
-public:
-    FileSpan(const FileContent* content, uint32_t start, uint32_t end);
-    ~FileSpan();
+    public:
+        FileSpan(const FileContent* content, uint32_t start, uint32_t end);
 
-    const FileContent* Content() const;
+        ~FileSpan();
 
-    /**
-     * Inclusive Start position (byte offset from the document's start).
-     */
-    uint32_t Start() const;
+        const FileContent* Content() const;
 
-    /**
-     * Exclusive End position (byte offset from the document's start).
-     */
-    uint32_t End() const;
+        /**
+         * Inclusive Start position (byte offset from the document's start).
+         */
+        uint32_t Start() const;
 
-    /**
-     * The length (in bytes) of the span.
-     */
-    uint32_t Length() const;
+        /**
+         * Exclusive End position (byte offset from the document's start).
+         */
+        uint32_t End() const;
 
-    /**
-     * Copies the characters from the span to the destination char array (does not include a null terminator).
-     * @return The number of bytes copied (equal to Length()).
-     */
-    uint32_t CopyTo(char* dest) const;
+        /**
+         * The length (in bytes) of the span.
+         */
+        uint32_t Length() const;
 
-    /**
-     * Prints the span's characters to the stream.
-     * @return The number of bytes printed (equal to Length()).
-     */
-    size_t Print(FILE* stream) const;
+        /**
+         * Copies the characters from the span to the destination char array (does not include a null terminator).
+         * @return The number of bytes copied (equal to Length()).
+         */
+        uint32_t CopyTo(char* dest) const;
 
-    /**
-     * Allocates a new MotString which represents the content of the span.
-     */
-    MotString* NewMotString() const;
-};
+        /**
+         * Prints the span's characters to the stream.
+         * @return The number of bytes printed (equal to Length()).
+         */
+        size_t Print(FILE* stream) const;
+
+        /**
+         * Allocates a new MotString which represents the content of the span.
+         */
+        MotString* NewMotString() const;
+    };
+}
 
 #endif //MOT_SPAN_H
