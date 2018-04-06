@@ -69,6 +69,9 @@ int main(int argc, char** argv)
     std::cout << MotString::Compare(&RU, &ru) << "\n";
     std::cout << MotString::CompareCaseInsensitive(&RU, &ru) << "\n";
 
+    std::cout << one << "\n";
+    std::cout << ru << "\n";
+
     return 0;
 
     const char* filename = "sample_profile";

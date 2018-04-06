@@ -1,6 +1,7 @@
 #include <cassert>
 #include <cstring>
 #include <algorithm>
+#include <ostream>
 #include "MotString.h"
 #include "Utf8.h"
 
@@ -61,6 +62,17 @@ MotString& MotString::operator=(MotString rhs) noexcept
 {
     swap(*this, rhs);
     return *this;
+}
+
+std::ostream& operator<<(std::ostream& os, const MotString& s)
+{
+    auto len = s._byteCount;
+    if (len > 0)
+    {
+        os.write(s._data, len);
+    }
+
+    return os;
 }
 
 void swap(MotString& a, MotString& b) noexcept

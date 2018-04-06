@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstdint>
 #include <cstdio>
+#include <iosfwd>
 
 class MotString
 {
@@ -35,6 +36,7 @@ public:
     ~MotString();
 
     MotString& operator=(MotString) noexcept;
+    friend std::ostream& operator<<(std::ostream& os, const MotString& s);
 
     friend void swap(MotString& a, MotString& b) noexcept;
 
