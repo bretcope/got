@@ -7,7 +7,7 @@
 
 namespace mot
 {
-    Lexer::Lexer(FileContent* content, FILE* errStream) :
+    Lexer::Lexer(FILE* errStream, FileContent* content) :
             _errStream(errStream),
             _content(content),
             _input(content->Data()),

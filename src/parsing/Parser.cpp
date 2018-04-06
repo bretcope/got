@@ -12,7 +12,7 @@ namespace mot
         FILE* _errStream;
 
     public:
-        Parser(Lexer* lexer, FileContent* content, FILE* errStream);
+        Parser(FILE* errStream, Lexer* lexer, FileContent* content);
 
         ~Parser();
 
@@ -37,7 +37,7 @@ namespace mot
         void UnexpectedToken(int expectedCount, TokenType* expectedList);
     };
 
-    Parser::Parser(Lexer* lexer, FileContent* content, FILE* errStream) :
+    Parser::Parser(FILE* errStream, Lexer* lexer, FileContent* content) :
             _lexer(lexer),
             _content(content),
             _errStream(errStream)
@@ -47,10 +47,10 @@ namespace mot
     Parser::~Parser() = default;
 
 
-    bool ParseConfigurationFile(FileContent* content, FILE* errStream, FileNode** out_tree)
+    bool ParseConfigurationFile(FILE* errStream, FileContent* content, FileNode** out_tree)
     {
-        Lexer lexer(content, errStream);
-        Parser parser(&lexer, content, errStream);
+        Lexer lexer(errStream, content);
+        Parser parser(errStream, &lexer, content);
 
         return parser.ParseFile(out_tree);
     }

@@ -28,7 +28,7 @@ namespace mot
     public:
         static const uint32_t SPACES_PER_INDENT = 4;
 
-        Lexer(FileContent* content, FILE* errStream);
+        Lexer(FILE* errStream, FileContent* content);
 
         ~Lexer();
 

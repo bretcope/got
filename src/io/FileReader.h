@@ -17,7 +17,7 @@ namespace mot
      * @param [out] out_content The loaded content, if successful.
      * @return True if the file was loaded successfully.
      */
-    bool LoadFile(const char* filename, uint32_t maxSize, FILE* errStream, FileContent** out_content);
+    bool LoadFile(FILE* errStream, const char* filename, uint32_t maxSize, FileContent** out_content);
 }
 
 #endif //MOT_FILE_H

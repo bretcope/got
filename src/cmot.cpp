@@ -10,7 +10,7 @@ using namespace mot;
 
 void DebugLexer(FileContent* content)
 {
-    auto lexer = Lexer(content, stderr);
+    auto lexer = Lexer(stderr, content);
 
     while (auto token = lexer.Advance())
     {
@@ -22,7 +22,7 @@ void DebugLexer(FileContent* content)
 void DebugParser(FileContent* content)
 {
     FileNode* tree;
-    if (ParseConfigurationFile(content, stderr, &tree))
+    if (ParseConfigurationFile(stderr, content, &tree))
     {
         auto callback = [] (const Node* node, int level) -> void
         {
@@ -80,7 +80,7 @@ int main(int argc, char** argv)
 
     FileContent* content;
     const uint32_t MAX_SIZE = 10 * 1024 * 1024;
-    if (LoadFile(filename, MAX_SIZE, stderr, &content))
+    if (LoadFile(stderr, filename, MAX_SIZE, &content))
     {
 //        std::cout.write(content, size);
 //        DebugLexer(content);

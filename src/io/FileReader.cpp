@@ -5,7 +5,7 @@
 
 namespace mot
 {
-    bool LoadFile(const char* filename, uint32_t maxSize, FILE* errStream, FileContent** out_content)
+    bool LoadFile(FILE* errStream, const char* filename, uint32_t maxSize, FileContent** out_content)
     {
         *out_content = nullptr;
 
