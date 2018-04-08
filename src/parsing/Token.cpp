@@ -102,4 +102,9 @@ namespace mot
     {
         return _text.Content()->Filename();
     }
+
+    void Token::PrintFileAndPosition(FILE* stream, bool endLine) const
+    {
+        _text.Content()->PrintFileAndPosition(stream, _text.Start(), endLine);
+    }
 }

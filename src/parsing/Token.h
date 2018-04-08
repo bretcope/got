@@ -109,6 +109,11 @@ namespace mot
         const MotString* Value() const;
 
         const char* Filename() const;
+
+        /**
+         * Prints the filename followed by the line and column numbers, and an optional line feed.
+         */
+        void PrintFileAndPosition(FILE* stream, bool endLine = true) const;
     };
 }
 

@@ -74,4 +74,9 @@ namespace mot
 
         return new MotString(str, length, true);
     }
+
+    void FileSpan::PrintFileAndPosition(FILE* stream, bool endLine) const
+    {
+        _content->PrintFileAndPosition(stream, _start, endLine);
+    }
 }

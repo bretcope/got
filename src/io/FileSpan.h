@@ -50,6 +50,11 @@ namespace mot
         size_t Print(FILE* stream) const;
 
         /**
+         * Prints the filename followed by the line and column numbers, and an optional line feed.
+         */
+        void PrintFileAndPosition(FILE* stream, bool endLine = true) const;
+
+        /**
          * Allocates a new MotString which represents the content of the span.
          */
         MotString* NewMotString() const;

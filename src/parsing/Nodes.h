@@ -55,6 +55,7 @@ namespace mot
         int VisitTokens(std::function<void(const Token*)> callback) const;
         int VisitNodes(std::function<void(const Node* node, int level)> callback) const;
         FileSpan Position() const;
+        void PrintFileAndPosition(FILE* stream, bool endLine = true) const;
     };
 
     class FileNode;
