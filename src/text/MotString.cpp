@@ -163,6 +163,11 @@ namespace mot
         return &empty;
     }
 
+    bool MotString::IsEmpty(const MotString* s)
+    {
+        return s == nullptr || s->ByteLength() == 0;
+    }
+
     int MotString::CompareImpl(const MotString* a, const MotString* b, bool caseSensitive, bool orderedResult)
     {
         if (a == b)

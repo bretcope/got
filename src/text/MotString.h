@@ -95,6 +95,8 @@ namespace mot
          */
         static const MotString* Empty();
 
+        static bool IsEmpty(const MotString* s);
+
     private:
 
         /**
