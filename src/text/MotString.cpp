@@ -122,6 +122,35 @@ namespace mot
         return hash;
     }
 
+    void MotString::SubString(uint32_t start, uint32_t length, bool copyData, mot::MotString& out_subString) const
+    {
+        auto origLen = ByteLength();
+
+        assert(start <= origLen);
+        assert(length <= origLen - start);
+
+        length = start < origLen ? std::min(length, origLen - start) : 0;
+
+        if (length == 0)
+        {
+            out_subString = MotString();
+            return;
+        }
+
+        const char* data;
+        if (copyData)
+        {
+            data = new char[length];
+            memcpy((char*)data, &_data[start], length);
+        }
+        else
+        {
+            data = &_data[start];
+        }
+
+        out_subString = MotString(data, length, copyData);
+    }
+
     int MotString::Compare(const MotString* a, const MotString* b)
     {
         return CompareImpl(a, b, true, true);

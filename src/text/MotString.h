@@ -61,6 +61,16 @@ namespace mot
         uint32_t HashCode() const;
 
         /**
+         * Creates a substring based on a byte offset and length. Does not enforce that the substring starts or ends on valid UTF-8 boundaries.
+         * @param start Byte offset where the substring should start.
+         * @param length Length (in bytes) of the substring.
+         * @param copyData If true, a copy of the data will be made. Otherwise the substring will point to the original data object, whose lifetime is not
+         * managed by the substring.
+         * @param out_subString The MotString which will receive the substring.
+         */
+        void SubString(uint32_t start, uint32_t length, bool copyData, MotString& out_subString) const;
+
+        /**
          * Returns zero if the two strings have identical values, a negative value if a < b, and a positive if a > b. The ordering is based on the binary encoding.
          */
         static int Compare(const MotString* a, const MotString* b);
