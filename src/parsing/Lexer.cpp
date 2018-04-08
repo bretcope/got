@@ -3,7 +3,7 @@
 #include <cstring>
 #include <vector>
 #include "Lexer.h"
-#include "../io/Utf8.h"
+#include "../text/Utf8.h"
 
 namespace mot
 {

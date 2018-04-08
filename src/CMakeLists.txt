@@ -7,11 +7,6 @@ add_library(cmotlib
             io/FileReader.h
             io/FileSpan.cpp
             io/FileSpan.h
-            io/MotString.cpp
-            io/MotString.h
-            io/Utf8.cpp
-            io/Utf8.Gen.cpp
-            io/Utf8.h
             parsing/Lexer.cpp
             parsing/Lexer.h
             parsing/Nodes.h
@@ -26,7 +21,13 @@ add_library(cmotlib
             parsing/Parser.h
             parsing/SyntaxElement.h
             parsing/Token.cpp
-            parsing/Token.h)
+            parsing/Token.h
+            text/Collections.h
+            text/MotString.cpp
+            text/MotString.h
+            text/Utf8.cpp
+            text/Utf8.Gen.cpp
+            text/Utf8.h)
 
 add_executable(cmot cmot.cpp)
 

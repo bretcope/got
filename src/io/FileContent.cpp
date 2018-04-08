@@ -2,7 +2,7 @@
 #include <cstring>
 #include <cassert>
 #include "FileContent.h"
-#include "Utf8.h"
+#include "../text/Utf8.h"
 
 namespace mot
 {

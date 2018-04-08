@@ -4,7 +4,7 @@
 #include "io/FileReader.h"
 #include "parsing/Lexer.h"
 #include "parsing/Parser.h"
-#include "io/Utf8.h"
+#include "text/Utf8.h"
 
 using namespace mot;
 

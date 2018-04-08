@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <cstdio>
 #include "FileContent.h"
-#include "MotString.h"
+#include "../text/MotString.h"
 
 namespace mot
 {

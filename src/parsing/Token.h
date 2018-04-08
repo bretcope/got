@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cassert>
-#include "../io/MotString.h"
+#include "../text/MotString.h"
 #include "SyntaxElement.h"
 #include "../io/FileSpan.h"
 

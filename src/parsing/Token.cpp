@@ -2,7 +2,7 @@
 #include <cstring>
 #include <algorithm>
 #include "Token.h"
-#include "../io/Utf8.h"
+#include "../text/Utf8.h"
 #include "Lexer.h"
 
 namespace mot
