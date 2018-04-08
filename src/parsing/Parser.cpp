@@ -84,7 +84,6 @@ PropertyList
     {
         auto count = 0;
         auto capacity = 0;
-        auto success = false;
         PropertyNode** properties = nullptr; // this should probably be std::vector<PropertyNode*> or some other wrapper, but... ¯\_(ツ)_/¯
 
         do
@@ -92,7 +91,6 @@ PropertyList
             PropertyNode* prop;
             if (ParseProperty(&prop))
             {
-                success = true;
                 if (count >= capacity)
                 {
                     auto newCapacity = std::max(8, capacity * 2);
@@ -113,18 +111,18 @@ PropertyList
             }
             else
             {
-                success = false;
-                break;
+                goto FAILURE;
             }
 
         } while (_lexer->PeekType() == TokenType::Word);
 
-        if (success)
+        if (count > 0)
         {
             *out_node = new PropertyListNode(properties, count);
             return true;
         }
 
+        FAILURE:
         for (auto i = 0; i < count; i++)
         {
             delete properties[i];

@@ -7,7 +7,7 @@ namespace mot
             _properties(properties),
             _count(count)
     {
-        assert(properties != nullptr || count == 0);
+        assert(properties != nullptr && count > 0);
     }
 
     PropertyListNode::~PropertyListNode()
