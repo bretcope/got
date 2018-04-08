@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <cassert>
 #include "../io/MotString.h"
 #include "SyntaxElement.h"
 #include "../io/FileSpan.h"
@@ -32,7 +33,7 @@ namespace mot
         BlockText,
 
         // Symbols
-                Colon,
+        Colon,
         GreaterThan,
     };
 
@@ -77,6 +78,7 @@ namespace mot
                 return "GreaterThan";
         }
 
+        assert(!"TokenType missing from GetTokenTypeName");
         return "";
     }
 

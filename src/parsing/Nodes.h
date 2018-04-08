@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <functional>
+#include <cassert>
 #include "Token.h"
 #include "SyntaxElement.h"
 
@@ -36,6 +37,7 @@ namespace mot
                 return "PropertyBlock";
         }
 
+        assert(!"NodeType missing from GetNodeTypeName");
         return "";
     }
 
