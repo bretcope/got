@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <cstdint>
 #include <cstdio>
-#include <iosfwd>
+#include <ostream>
 
 namespace mot
 {
@@ -91,6 +91,11 @@ namespace mot
          * Prints the string to a file stream.
          */
         void Print(FILE* stream) const;
+
+        /**
+         * Returns a pointer to an empty MotString. Use this method to avoid allocating every time you need an empty string on the heap.
+         */
+        static const MotString* Empty();
 
     private:
 

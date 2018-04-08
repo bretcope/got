@@ -1,7 +1,6 @@
 #include <cassert>
 #include <cstring>
 #include <algorithm>
-#include <ostream>
 #include "MotString.h"
 #include "Utf8.h"
 
@@ -149,6 +148,12 @@ namespace mot
     void MotString::Print(FILE* stream) const
     {
         fwrite(_data, 1, _byteCount, stream);
+    }
+
+    const MotString* MotString::Empty()
+    {
+        static const MotString empty(nullptr, 0, false);
+        return &empty;
     }
 
     int MotString::CompareImpl(const MotString* a, const MotString* b, bool caseSensitive, bool orderedResult)
