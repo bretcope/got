@@ -152,6 +152,9 @@ namespace mot
         NodeType Type() const override;
 
         void IterateSyntaxElements(std::function<void(const SyntaxElement*)> callback) const override;
+
+        const MotString* PropertyType() const;
+        const MotString* PropertyName() const;
     };
 
     class PropertyValueNode final : public Node

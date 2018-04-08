@@ -36,4 +36,14 @@ namespace mot
         if (_name != nullptr)
             callback(_name);
     }
+
+    const MotString* PropertyDeclarationNode::PropertyType() const
+    {
+        return _type->Value();
+    }
+
+    const MotString* PropertyDeclarationNode::PropertyName() const
+    {
+        return _name == nullptr ? MotString::Empty() : _name->Value();
+    }
 }
