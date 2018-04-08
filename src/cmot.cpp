@@ -10,7 +10,7 @@ using namespace mot;
 
 void DebugLexer(FileContent* content)
 {
-    auto lexer = Lexer(stderr, content);
+    Lexer lexer(stderr, content);
 
     while (auto token = lexer.Advance())
     {

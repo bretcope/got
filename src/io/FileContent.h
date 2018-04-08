@@ -24,7 +24,8 @@ namespace mot
          * @param size The size of data (in bytes).
          */
         FileContent(char* filename, char* data, uint32_t size);
-
+        FileContent(const FileContent&) = delete;
+        FileContent(FileContent&&) = delete;
         ~FileContent();
 
         const char* Filename() const;

@@ -13,7 +13,8 @@ namespace mot
 
     public:
         Parser(FILE* errStream, Lexer* lexer, FileContent* content);
-
+        Parser(const Parser&) = delete;
+        Parser(Parser&&) = delete;
         ~Parser();
 
         bool ParseFile(FileNode** out_node);

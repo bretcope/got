@@ -29,7 +29,8 @@ namespace mot
         static const uint32_t SPACES_PER_INDENT = 4;
 
         Lexer(FILE* errStream, FileContent* content);
-
+        Lexer(const Lexer&) = delete;
+        Lexer(Lexer&&) = delete;
         ~Lexer();
 
         TokenType PeekType();

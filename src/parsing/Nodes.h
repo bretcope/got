@@ -75,7 +75,8 @@ namespace mot
 
     public:
         FileNode(PropertyListNode* propertyList, Token* endOfInput);
-
+        FileNode(const FileNode&) = delete;
+        FileNode(FileNode&&) = delete;
         ~FileNode();
 
         NodeType Type() const override;
@@ -93,7 +94,8 @@ namespace mot
 
     public:
         PropertyListNode(PropertyNode** properties, int count);
-
+        PropertyListNode(const PropertyListNode&) = delete;
+        PropertyListNode(PropertyListNode&&) = delete;
         ~PropertyListNode();
 
         NodeType Type() const override;
@@ -116,11 +118,10 @@ namespace mot
 
     public:
         PropertyNode(PropertyDeclarationNode* declaration, Token* endOfLine);
-
         PropertyNode(PropertyDeclarationNode* declaration, PropertyValueNode* value, Token* endOfLine);
-
         PropertyNode(PropertyDeclarationNode* declaration, Token* endOfLine, PropertyBlockNode* block);
-
+        PropertyNode(const PropertyNode&) = delete;
+        PropertyNode(PropertyNode&&) = delete;
         ~PropertyNode();
 
         NodeType Type() const override;
@@ -146,9 +147,9 @@ namespace mot
 
     public:
         explicit PropertyDeclarationNode(Token* type);
-
         PropertyDeclarationNode(Token* type, Token* name);
-
+        PropertyDeclarationNode(const PropertyDeclarationNode&) = delete;
+        PropertyDeclarationNode(PropertyDeclarationNode&&) = delete;
         ~PropertyDeclarationNode();
 
         NodeType Type() const override;
@@ -166,7 +167,8 @@ namespace mot
 
     public:
         PropertyValueNode(Token* specifier, Token* text);
-
+        PropertyValueNode(const PropertyValueNode&) = delete;
+        PropertyValueNode(PropertyValueNode&&) = delete;
         ~PropertyValueNode();
 
         NodeType Type() const override;
@@ -186,7 +188,8 @@ namespace mot
 
     public:
         PropertyBlockNode(Token* indent, PropertyListNode* propertyList, Token* outdent);
-
+        PropertyBlockNode(const PropertyBlockNode&) = delete;
+        PropertyBlockNode(PropertyBlockNode&&) = delete;
         ~PropertyBlockNode();
 
         NodeType Type() const override;

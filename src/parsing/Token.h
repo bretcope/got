@@ -92,7 +92,8 @@ namespace mot
 
     public:
         Token(TokenType type, FileSpan trivia, FileSpan text, MotString* value = nullptr);
-
+        Token(const Token&) = delete;
+        Token(Token&&) = delete;
         ~Token();
 
         bool IsToken() const final;
