@@ -25,10 +25,15 @@ namespace mot
         return NodeType::PropertyBlock;
     }
 
-    void PropertyBlockNode::IterateSyntaxElements(std::function<void(const SyntaxElement*)> callback) const
+    void PropertyBlockNode::GetSyntaxElements(std::vector<const SyntaxElement*>& list) const
     {
-        callback(_indent);
-        callback(_propertyList);
-        callback(_outdent);
+        list.push_back(_indent);
+        list.push_back(_propertyList);
+        list.push_back(_outdent);
+    }
+
+    const char* PropertyBlockNode::Filename() const
+    {
+        return _indent->Filename();
     }
 }

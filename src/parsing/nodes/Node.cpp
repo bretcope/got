@@ -7,46 +7,80 @@ namespace mot
         return false;
     }
 
-    int Node::VisitTokens(std::function<void(const Token*)> callback) const
+    static int VisitTokensImpl(const Node* node, std::function<void(const Token*)> callback)
     {
+        std::vector<const SyntaxElement*> list;
+        node->GetSyntaxElements(list);
         auto count = 0;
-        std::function<void(const SyntaxElement*)> visitCallack = [&](const SyntaxElement* element) -> void
+
+        for (auto it = list.begin(); it != list.end(); ++it)
         {
+            auto element = *it;
             if (element->IsToken())
             {
-                callback((Token*)element);
+                callback((const Token*)element);
                 count++;
             }
             else if (element->IsNode())
             {
-                ((Node*)element)->IterateSyntaxElements(visitCallack);
+                count += VisitTokensImpl((const Node*)element, callback);
             }
-        };
+        }
 
-        IterateSyntaxElements(visitCallack);
+        return count;
+    }
+
+    int Node::VisitTokens(std::function<void(const Token*)> callback) const
+    {
+        return VisitTokensImpl(this, callback);
+    }
+
+    static int VisitNodesImpl(const Node* node, std::function<void(const Node* node, int level)> callback, int level)
+    {
+        std::vector<const SyntaxElement*> list;
+        node->GetSyntaxElements(list);
+        auto count = 1; // we start at 1 because we know the current node has been sent to the callback already
+
+        for (auto it = list.begin(); it != list.end(); ++it)
+        {
+            auto element = *it;
+            if (element->IsNode())
+            {
+                auto child = (const Node*)element;
+                callback(child, level);
+                count += VisitNodesImpl(child, callback, level + 1);
+            }
+        }
+
         return count;
     }
 
     int Node::VisitNodes(std::function<void(const Node* node, int level)> callback) const
     {
         callback(this, 0);
-        auto count = 1;
-        auto level = 1;
+        return VisitNodesImpl(this, callback, 1);
+    }
 
-        std::function<void(const SyntaxElement*)> visitCallback = [&](const SyntaxElement* element) -> void
+    static const Token* ResolveToken(const SyntaxElement* element, bool left)
+    {
+        std::vector<const SyntaxElement*> list;
+        while (element->IsNode())
         {
-            if (element->IsNode())
-            {
-                auto node = (Node*)element;
-                callback(node, level);
-                count++;
-                level++;
-                node->IterateSyntaxElements(visitCallback);
-                level--;
-            }
-        };
+            list.clear();
+            ((const Node*)element)->GetSyntaxElements(list);
+            assert(list.size() > 0);
+            element = left ? list.front() : list.back();
+        }
 
-        IterateSyntaxElements(visitCallback);
-        return count;
+        assert(element->IsToken());
+        return (const Token*)element;
+    }
+
+    FileSpan Node::Position() const
+    {
+        auto first = ResolveToken(this, true);
+        auto last = ResolveToken(this, false);
+
+        return FileSpan(first->Text().Content(), first->Text().Start(), last->Text().End());
     }
 }

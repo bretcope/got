@@ -48,17 +48,22 @@ namespace mot
         return NodeType::Property;
     }
 
-    void PropertyNode::IterateSyntaxElements(std::function<void(const SyntaxElement*)> callback) const
+    void PropertyNode::GetSyntaxElements(std::vector<const SyntaxElement*>& list) const
     {
-        callback(_declaration);
+        list.push_back(_declaration);
 
         if (_value != nullptr)
-            callback(_value);
+            list.push_back(_value);
 
-        callback(_endOfLine);
+        list.push_back(_endOfLine);
 
         if (_block != nullptr)
-            callback(_block);
+            list.push_back(_block);
+    }
+
+    const char* PropertyNode::Filename() const
+    {
+        return _endOfLine->Filename();
     }
 
     const PropertyDeclarationNode* PropertyNode::Declaration() const

@@ -27,15 +27,20 @@ namespace mot
         return NodeType::PropertyList;
     }
 
-    void PropertyListNode::IterateSyntaxElements(std::function<void(const SyntaxElement*)> callback) const
+    void PropertyListNode::GetSyntaxElements(std::vector<const SyntaxElement*>& list) const
     {
         auto props = _properties;
         auto count = _count;
 
         for (auto i = 0; i < count; i++)
         {
-            callback(props[i]);
+            list.push_back(props[i]);
         }
+    }
+
+    const char* PropertyListNode::Filename() const
+    {
+        return _properties[0]->Filename();
     }
 
     const PropertyNode* PropertyListNode::GetProperty(int index) const

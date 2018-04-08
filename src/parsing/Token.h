@@ -107,6 +107,8 @@ namespace mot
         void DebugPrint(FILE* stream, bool positions, bool color) const;
 
         const MotString* Value() const;
+
+        const char* Filename() const;
     };
 }
 

@@ -22,14 +22,19 @@ namespace mot
         return NodeType::File;
     }
 
-    void FileNode::IterateSyntaxElements(std::function<void(const SyntaxElement*)> callback) const
+    void FileNode::GetSyntaxElements(std::vector<const SyntaxElement*>& list) const
     {
-        callback(_propertyList);
-        callback(_endOfInput);
+        list.push_back(_propertyList);
+        list.push_back(_endOfInput);
     }
 
     const PropertyListNode* FileNode::PropertyList() const
     {
         return _propertyList;
+    }
+
+    const char* FileNode::Filename() const
+    {
+        return _endOfInput->Filename();
     }
 }

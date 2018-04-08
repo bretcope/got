@@ -97,4 +97,9 @@ namespace mot
     {
         return _value;
     }
+
+    const char* Token::Filename() const
+    {
+        return _text.Content()->Filename();
+    }
 }

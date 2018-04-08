@@ -4,6 +4,7 @@
 #include <memory>
 #include <functional>
 #include <cassert>
+#include <vector>
 #include "Token.h"
 #include "SyntaxElement.h"
 
@@ -48,11 +49,12 @@ namespace mot
 
         virtual NodeType Type() const = 0;
 
-        virtual void IterateSyntaxElements(std::function<void(const SyntaxElement*)> callback) const = 0;
+        virtual void GetSyntaxElements(std::vector<const SyntaxElement*>& list) const = 0;
+        virtual const char* Filename() const = 0;
 
         int VisitTokens(std::function<void(const Token*)> callback) const;
-
         int VisitNodes(std::function<void(const Node* node, int level)> callback) const;
+        FileSpan Position() const;
     };
 
     class FileNode;
@@ -81,7 +83,8 @@ namespace mot
 
         NodeType Type() const override;
 
-        void IterateSyntaxElements(std::function<void(const SyntaxElement*)> callback) const override;
+        void GetSyntaxElements(std::vector<const SyntaxElement*>& list) const override;
+        const char* Filename() const override;
 
         const PropertyListNode* PropertyList() const;
     };
@@ -100,7 +103,8 @@ namespace mot
 
         NodeType Type() const override;
 
-        void IterateSyntaxElements(std::function<void(const SyntaxElement*)> callback) const override;
+        void GetSyntaxElements(std::vector<const SyntaxElement*>& list) const override;
+        const char* Filename() const override;
 
         const PropertyNode* GetProperty(int index) const;
 
@@ -126,7 +130,8 @@ namespace mot
 
         NodeType Type() const override;
 
-        void IterateSyntaxElements(std::function<void(const SyntaxElement*)> callback) const override;
+        void GetSyntaxElements(std::vector<const SyntaxElement*>& list) const override;
+        const char* Filename() const override;
 
         const PropertyDeclarationNode* Declaration() const;
 
@@ -154,7 +159,8 @@ namespace mot
 
         NodeType Type() const override;
 
-        void IterateSyntaxElements(std::function<void(const SyntaxElement*)> callback) const override;
+        void GetSyntaxElements(std::vector<const SyntaxElement*>& list) const override;
+        const char* Filename() const override;
 
         const MotString* PropertyType() const;
         const MotString* PropertyName() const;
@@ -173,7 +179,8 @@ namespace mot
 
         NodeType Type() const override;
 
-        void IterateSyntaxElements(std::function<void(const SyntaxElement*)> callback) const override;
+        void GetSyntaxElements(std::vector<const SyntaxElement*>& list) const override;
+        const char* Filename() const override;
 
         // todo: method to evaluate (parse) the actual value out of the _text token.
         // todo: const char* Value() const;
@@ -194,7 +201,8 @@ namespace mot
 
         NodeType Type() const override;
 
-        void IterateSyntaxElements(std::function<void(const SyntaxElement*)> callback) const override;
+        void GetSyntaxElements(std::vector<const SyntaxElement*>& list) const override;
+        const char* Filename() const override;
     };
 }
 
