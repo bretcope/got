@@ -34,11 +34,9 @@ namespace mot
          * string literals.
          */
         explicit MotString(const char* str);
-
+        MotString();
         MotString(const MotString&);
-
         MotString(MotString&&) noexcept;
-
         ~MotString();
 
         MotString& operator=(MotString) noexcept;

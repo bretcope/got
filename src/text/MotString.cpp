@@ -21,6 +21,13 @@ namespace mot
         _isOwnerOfData = false;
     }
 
+    MotString::MotString():
+        _data(nullptr),
+        _byteCount(0),
+        _isOwnerOfData(false)
+    {
+    }
+
     MotString::MotString(const MotString& other)
     {
         auto data = other._data;
@@ -152,7 +159,7 @@ namespace mot
 
     const MotString* MotString::Empty()
     {
-        static const MotString empty(nullptr, 0, false);
+        static const MotString empty;
         return &empty;
     }
 
