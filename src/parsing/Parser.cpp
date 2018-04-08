@@ -99,7 +99,7 @@ PropertyList
                     if (properties != nullptr)
                     {
                         memcpy(newProps, properties, sizeof(PropertyNode*) * count);
-                        delete properties;
+                        delete[] properties;
                     }
 
                     capacity = newCapacity;

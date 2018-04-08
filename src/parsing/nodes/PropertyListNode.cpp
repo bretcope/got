@@ -19,7 +19,7 @@ namespace mot
             delete props[i];
         }
 
-        delete props;
+        delete[] props;
     }
 
     NodeType PropertyListNode::Type() const

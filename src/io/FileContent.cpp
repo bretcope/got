@@ -118,7 +118,7 @@ namespace mot
 
     void FileContent::ResetLineMarkers()
     {
-        delete _lineStarts;
+        delete[] _lineStarts;
         _lineStarts = nullptr;
         _lineCount = 0;
     }
