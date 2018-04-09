@@ -2,7 +2,6 @@
 #include <cstring>
 #include <algorithm>
 #include "MotString.h"
-#include "Utf8.h"
 
 namespace mot
 {
@@ -120,6 +119,11 @@ namespace mot
         }
 
         return hash;
+    }
+
+    Utf8::Iterator MotString::Iterator() const
+    {
+        return Utf8::Iterator(_data, _byteCount);
     }
 
     void MotString::SubString(uint32_t start, uint32_t length, bool copyData, mot::MotString& out_subString) const

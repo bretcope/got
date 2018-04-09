@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <ostream>
+#include "Utf8.h"
 
 namespace mot
 {
@@ -59,6 +60,8 @@ namespace mot
          * Returns a case-insensitive hash code for the string.
          */
         uint32_t HashCode() const;
+
+        Utf8::Iterator Iterator() const;
 
         /**
          * Creates a substring based on a byte offset and length. Does not enforce that the substring starts or ends on valid UTF-8 boundaries.
