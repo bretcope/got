@@ -45,6 +45,30 @@ namespace mot
          * Returns the lowercase variant of the code point. If no conversion is applicable, the original character is returned.
          */
         char32_t ToLower(char32_t ch);
+
+        class Iterator
+        {
+        private:
+            const char* _data;
+            uint32_t _index;
+            uint32_t _length;
+            char32_t _currentChar;
+            uint32_t _chSize;
+            bool _isValidUtf8;
+
+        public:
+            Iterator(const char* data, uint32_t length);
+
+            Iterator& operator++();
+            char32_t operator*() const;
+            bool HasMore() const;
+            bool IsValidUtf8() const;
+            bool ShouldContinue() const;
+            uint32_t Index() const;
+
+        private:
+            void SetCurrentChar();
+        };
     }
 }
 

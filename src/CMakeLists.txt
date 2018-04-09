@@ -27,6 +27,7 @@ add_library(cmotlib
             text/MotString.h
             text/Utf8.cpp
             text/Utf8.Gen.cpp
+            text/Utf8.Iterator.cpp
             text/Utf8.h)
 
 add_executable(cmot cmot.cpp)
