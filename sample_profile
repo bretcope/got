@@ -1,25 +1,23 @@
 # comment
 
-# profile must start with one of
+profile # declares that the file is a profile (meaning it can include resources)
 
-PROFILE
+# REDIRECT # might eventually be something to support
 
-REDIRECT
-
-RESOURCE name
+# RESOURCE name # if the file were a resource (resource files cannot include other resources)
 
 #   $ = prefix
 #   @ = repo
 
 
 # basic include
-INCLUDE "🤷": ".got\u1F937_profile_a\t\tstuff 🤷"
+include "🤷": ".got\u1F937_profile_a\t\tstuff 🤷"
 
 # named include
-INCLUDE work: $work/GotConfig/.got_profile_work
+include work: $work/GotConfig/.got_profile_work
 
 # advanced include
-INCLUDE b
+include b
     file: .got_profile_b
     #rename "$*": b.*         # namespace just the prefixes
     #rename "@*": b.*         # namespace just the repos
@@ -27,18 +25,22 @@ INCLUDE b
     rename "$b.work": b2.work # rename a single prefix
     #prefix personal:
 
-PREFIX work
-    win: /c/code
-    unix: ~/code
+prefix something: ~/code # all environments
 
-PREFIX personal
-    win: /c/bret
-    unix: ~/git
+prefix work
+    env win: /c/code
+    env unix: ~/code
+    env default: ~/mine # default path to use when there isn't a property that matches the current environment
+    override: true # if one of your include files defines this prefix, override must be set to true
 
-PREFIX csharp
-    all: $personal/cs
+prefix personal
+    env win: /c/bret
+    env unix: ~/git
 
-REPO bosunreporter
+prefix csharp
+    env default: $personal/cs
+
+repo bosunreporter
     remote origin: git@github.com:bretcope/BosunReporter.git
     path: $csharp/BosunReporter
     alias bosun
@@ -51,5 +53,5 @@ REPO bosunreporter
             And such.
 
 # alternate way to create an alias to
-ALIAS bosun: @bosunreporter
+alias bosun: @bosunreporter
 
