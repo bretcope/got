@@ -4,11 +4,12 @@
 #include <vector>
 #include "Lexer.h"
 #include "../text/Utf8.h"
+#include "../io/printing/FmtPosition.h"
 
 namespace mot
 {
-    Lexer::Lexer(FILE* errStream, FileContent* content) :
-            _errStream(errStream),
+    Lexer::Lexer(const Console& console, FileContent* content) :
+            _console(console),
             _content(content),
             _input(content->Data()),
             _size(content->Size()),
@@ -26,7 +27,7 @@ namespace mot
     TokenType Lexer::PeekType()
     {
         auto token = Peek();
-        return token == nullptr ? TokenType::Error_ : token->Type();
+        return token == nullptr ? TokenType::Error : token->Type();
     }
 
     Token* Lexer::Peek()
@@ -109,7 +110,11 @@ namespace mot
                     for (auto i = _lineStart; i < pos; i++)
                     {
                         if (_input[i] == '\t')
-                            return NewToken(TokenType::Error_TabIndent, 0); // todo: error message
+                        {
+                            _console.Error() << "Error: Tab character used for indentation. Four spaces must be used for indentation.\n";
+                            _console.Error() << FmtPosition(_content, _position);
+                            return NewToken(TokenType::Error, 0);
+                        }
                     }
                 }
 
@@ -145,7 +150,9 @@ namespace mot
                 if (IsAlpha(ch))
                     return LexWord();
 
-                return NewToken(TokenType::Error_UnexpectedCharacter, 1); // todo: error message
+                _console.Error() << "Error: Unexpected character\n";
+                _console.Error() << FmtPosition(_content, _position);
+                return NewToken(TokenType::Error, 1);
         }
     }
 
@@ -240,7 +247,9 @@ namespace mot
             return NewToken(TokenType::Indent, 0);
         }
 
-        return NewToken(TokenType::Error_MisalignedIndentation, 0); // todo: error message
+        _console.Error() << "Error: Misaligned indentation. Indents must be multiples of four spaces.\n";
+        _console.Error() << FmtPosition(_content, _position);
+        return NewToken(TokenType::Error, 0);
     }
 
     Token* Lexer::LexEndOfLine(char currentChar)
@@ -355,14 +364,15 @@ namespace mot
             {
                 uint32_t lineNumber, lineStart;
                 _content->PositionDetails(start, &lineNumber, &lineStart, nullptr);
-                fprintf(_errStream, "Error: Unsupported escape sequence in quoted text\n");
-                fprintf(_errStream, "    at %s %u:%u\n", _content->Filename(), lineNumber, pos - lineStart + 1);
-                return NewToken(TokenType::Error_, pos - start);
+                _console.Error() << "Error: Unsupported escape sequence in quoted text\n";
+                _console.Error() << FmtPosition(_content, pos);
+                return NewToken(TokenType::Error, pos - start);
             }
         }
 
-        return NewToken(TokenType::Error_UnterminatedString, pos - start); // todo: error message
-
+        _console.Error() << "Error: Unterminated quoted-string\n";
+        _console.Error() << FmtPosition(_content, pos - start);
+        return NewToken(TokenType::Error, pos - start);
     }
 
     MotString* Lexer::GetQuotedLiteral(uint32_t openQuote, uint32_t closeQuote, uint32_t resultLength, bool hasEscapes)

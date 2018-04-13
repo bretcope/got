@@ -17,8 +17,9 @@ namespace mot
 
     public:
         FileSpan(const FileContent* content, uint32_t start, uint32_t end);
-
         ~FileSpan();
+
+        friend std::ostream& operator<<(std::ostream& os, FileSpan& span);
 
         const FileContent* Content() const;
 
@@ -42,17 +43,6 @@ namespace mot
          * @return The number of bytes copied (equal to Length()).
          */
         uint32_t CopyTo(char* dest) const;
-
-        /**
-         * Prints the span's characters to the stream.
-         * @return The number of bytes printed (equal to Length()).
-         */
-        size_t Print(FILE* stream) const;
-
-        /**
-         * Prints the filename followed by the line and column numbers, and an optional line feed.
-         */
-        void PrintFileAndPosition(FILE* stream, bool endLine = true) const;
 
         /**
          * Allocates a new MotString which represents the content of the span.

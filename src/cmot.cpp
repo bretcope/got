@@ -8,30 +8,30 @@
 
 using namespace mot;
 
-void DebugLexer(FileContent* content)
+void DebugLexer(const Console& console, FileContent* content)
 {
-    Lexer lexer(stderr, content);
+    Lexer lexer(console, content);
 
     while (auto token = lexer.Advance())
     {
-        token->DebugPrint(stdout, true, true);
+        token->DebugPrint(console.Out(), true, true);
         delete token;
     }
 }
 
-void DebugParser(FileContent* content)
+void DebugParser(const Console& console, FileContent* content)
 {
     FileNode* tree;
-    if (ParseConfigurationFile(stderr, content, &tree))
+    if (ParseConfigurationFile(console, content, &tree))
     {
-        auto callback = [] (const Node* node, int level) -> void
+        auto callback = [&console] (const Node* node, int level) -> void
         {
             for (auto i = 0; i < level; i++)
             {
-                fwrite("  ", 1, 2, stdout);
+                console.Out() << "  ";
             }
 
-            puts(GetNodeTypeName(node->Type()));
+            console.Out() << node->Type() << '\n';
         };
 
         tree->VisitNodes(callback);
@@ -41,50 +41,51 @@ void DebugParser(FileContent* content)
 
 int main(int argc, char** argv)
 {
+    // todo: better console type detection (support arguments)
 #if WIN32
-   const char* os = "Windows";
-#elif UNIX
-    const char* os = "Unix";
+   auto consoleType = ConsoleType::Windows;
 #else
-    const char* os = "Unknown";
+   auto consoleType = ConsoleType::Unix;
 #endif
 
-    MotString one("one");
-    MotString ONE("ONE");
-    MotString OnE("OnE");
-    MotString two("two");
+   Console console(consoleType, std::cout, std::cerr);
 
-    MotString RU("heyП");
-    MotString ru("heyп");
-
-    std::cout << one.HashCode() << "\n";
-    std::cout << ONE.HashCode() << "\n";
-    std::cout << OnE.HashCode() << "\n";
-    std::cout << two.HashCode() << "\n";
-    std::cout << RU.HashCode() << "\n";
-    std::cout << ru.HashCode() << "\n";
-
-    std::cout << MotString::Compare(&one, &ONE) << "\n";
-    std::cout << MotString::CompareCaseInsensitive(&one, &ONE) << "\n";
-    std::cout << MotString::CompareCaseInsensitive(&one, &OnE) << "\n";
-    std::cout << MotString::CompareCaseInsensitive(&one, &two) << "\n";
-    std::cout << MotString::Compare(&RU, &ru) << "\n";
-    std::cout << MotString::CompareCaseInsensitive(&RU, &ru) << "\n";
-
-    std::cout << one << "\n";
-    std::cout << ru << "\n";
-
-    return 0;
+//    MotString one("one");
+//    MotString ONE("ONE");
+//    MotString OnE("OnE");
+//    MotString two("two");
+//
+//    MotString RU("heyП");
+//    MotString ru("heyп");
+//
+//    std::cout << one.HashCode() << "\n";
+//    std::cout << ONE.HashCode() << "\n";
+//    std::cout << OnE.HashCode() << "\n";
+//    std::cout << two.HashCode() << "\n";
+//    std::cout << RU.HashCode() << "\n";
+//    std::cout << ru.HashCode() << "\n";
+//
+//    std::cout << MotString::Compare(&one, &ONE) << "\n";
+//    std::cout << MotString::CompareCaseInsensitive(&one, &ONE) << "\n";
+//    std::cout << MotString::CompareCaseInsensitive(&one, &OnE) << "\n";
+//    std::cout << MotString::CompareCaseInsensitive(&one, &two) << "\n";
+//    std::cout << MotString::Compare(&RU, &ru) << "\n";
+//    std::cout << MotString::CompareCaseInsensitive(&RU, &ru) << "\n";
+//
+//    std::cout << one << "\n";
+//    std::cout << ru << "\n";
+//
+//    return 0;
 
     const char* filename = "sample_profile";
 
     FileContent* content;
     const uint32_t MAX_SIZE = 10 * 1024 * 1024;
-    if (LoadFile(stderr, filename, MAX_SIZE, &content))
+    if (LoadFile(console, filename, MAX_SIZE, &content))
     {
 //        std::cout.write(content, size);
 //        DebugLexer(content);
-        DebugParser(content);
+        DebugParser(console, content);
 
         delete content;
     }

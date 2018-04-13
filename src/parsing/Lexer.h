@@ -6,13 +6,14 @@
 #include <cstdint>
 #include "Token.h"
 #include "../io/FileSpan.h"
+#include "../io/Console.h"
 
 namespace mot
 {
     class Lexer
     {
     private:
-        FILE* _errStream;           ///< Stream where error messages will be printed.
+        const Console& _console;    ///< Stream where error messages will be printed.
         FileContent* _content;      ///< The file content to be lexed.
         const char* _input;         ///< Raw binary representation of the file to lex (copy of _content->Data()). Encoding is expected to be UTF-8.
         uint32_t _position = 0;     ///< Current byte position in the input;
@@ -28,7 +29,7 @@ namespace mot
     public:
         static const uint32_t SPACES_PER_INDENT = 4;
 
-        Lexer(FILE* errStream, FileContent* content);
+        Lexer(const Console& console, FileContent* content);
         Lexer(const Lexer&) = delete;
         Lexer(Lexer&&) = delete;
         ~Lexer();

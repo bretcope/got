@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include "FileContent.h"
+#include "Console.h"
 
 namespace mot
 {
@@ -17,7 +18,7 @@ namespace mot
      * @param [out] out_content The loaded content, if successful.
      * @return True if the file was loaded successfully.
      */
-    bool LoadFile(FILE* errStream, const char* filename, uint32_t maxSize, FileContent** out_content);
+    bool LoadFile(const Console& console, const char* filename, uint32_t maxSize, FileContent** out_content);
 }
 
 #endif //MOT_FILE_H

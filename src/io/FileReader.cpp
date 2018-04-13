@@ -5,13 +5,13 @@
 
 namespace mot
 {
-    bool LoadFile(FILE* errStream, const char* filename, uint32_t maxSize, FileContent** out_content)
+    bool LoadFile(const Console& console, const char* filename, uint32_t maxSize, FileContent** out_content)
     {
         *out_content = nullptr;
 
         if (filename == nullptr)
         {
-            fprintf(errStream, "Error: Cannot load file. Filename is null.\n");
+            console.Error() << "Error: Cannot load file. Filename is null.\n";
             return false;
         }
 
@@ -20,9 +20,9 @@ namespace mot
         if (nameLen == 0)
         {
             if (*filename == '\0')
-                fprintf(errStream, "Error: Cannot load file. Filename is empty.\n");
+                console.Error() << "Error: Cannot load file. Filename is empty.\n";
             else
-                fprintf(errStream, "Error: Cannot load file. Filename is too long.\n");
+                console.Error() << "Error: Cannot load file. Filename is too long.\n";
 
             return false;
         }
@@ -31,7 +31,7 @@ namespace mot
         fs.open(filename, std::ifstream::in | std::ifstream::binary | std::ifstream::ate); // start at the end of the file to get its size
         if (!fs.is_open())
         {
-            fprintf(errStream, "Error: Unable to open file \"%s\"\n", filename);
+            console.Error() << "Error: Unable to open file \"" << filename << "\"\n";
             return false;
         }
 
@@ -39,13 +39,14 @@ namespace mot
 
         if (endPos < 0)
         {
-            fprintf(errStream, "Error: Could not read file \"%s\"\n", filename);
+            console.Error() << "Error: Could not read file \"" << filename << "\"\n";
             return false;
         }
 
         if (endPos > maxSize)
         {
-            fprintf(errStream, "Error: Cannot load file \"%s\"\n       Its size is larger than %f MB", filename, maxSize / (1024.0 * 1024.0));
+            console.Error() << "Error: Cannot load file \"" << filename << "\"\n";
+            console.Error() << "       Its size is larger than " << maxSize / (1024.0 * 1024.0) << "MB\n";
             return false;
         }
 
@@ -57,7 +58,7 @@ namespace mot
         if (fs.fail() || fs.tellg() != endPos)
         {
             delete content;
-            fprintf(errStream, "Error: Failed while reading file \"%s\"\n", filename);
+            console.Error() << "Error: Failed while reading file \"" << filename << "\"\n";
             return false;
         }
 

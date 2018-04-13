@@ -83,10 +83,4 @@ namespace mot
 
         return FileSpan(first->Text().Content(), first->Text().Start(), last->Text().End());
     }
-
-    void Node::PrintFileAndPosition(FILE* stream, bool endLine) const
-    {
-        auto pos = Position();
-        pos.Content()->PrintFileAndPosition(stream, pos.Start(), endLine);
-    }
 }

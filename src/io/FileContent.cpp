@@ -152,11 +152,4 @@ namespace mot
 
         return lineNumber;
     }
-
-    void FileContent::PrintFileAndPosition(FILE* stream, uint32_t position, bool endLine) const
-    {
-        uint32_t line, column;
-        PositionDetails(position, &line, nullptr, &column);
-        fprintf(stream, "\"%s\" line %u:%u%s", _filename, line, column, endLine ? "\n" : "");
-    }
 }

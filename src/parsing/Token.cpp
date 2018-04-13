@@ -55,7 +55,7 @@ namespace mot
         return _text;
     }
 
-    void Token::DebugPrint(FILE* stream, bool positions, bool color) const
+    void Token::DebugPrint(std::ostream& os, bool positions, bool color) const
     {
         auto reset = color ? "\033[0m" : "";
         auto boldGreen = color ? "\033[1;32m" : "";
@@ -65,32 +65,31 @@ namespace mot
         auto yellow = color ? "\033[33m" : "";
 
         auto tokenColor = _type == TokenType::EndOfLine ? boldBlue : boldGreen;
-        if (_type <= TokenType::Error_)
+        if (_type == TokenType::Error)
             tokenColor = boldRed;
 
         auto tokenName = GetTokenTypeName(_type);
 
         auto start = _text.Start();
 
-        fprintf(stream, "%s%s%s ", tokenColor, tokenName, reset);
+        os << tokenColor << tokenName << reset;
 
         if (positions)
         {
             uint32_t lineNumber, lineStart, column;
             _text.Content()->PositionDetails(start, &lineNumber, &lineStart, &column);
-            fprintf(stream, "%u:%u ", lineNumber, column + 1);
+            os << lineNumber << ':' << column + 1;
         }
 
         if (_value != nullptr)
         {
             if (_type == TokenType::BlockText)
-                fprintf(stream, "\n");
+                os << '\n';
 
-            fprintf(stream, "%s", yellow);
-            _value->Print(stream);
+            os << yellow << _value;
         }
 
-        fprintf(stream, "%s\n", reset);
+        os << '\n' << reset;
     }
 
     const MotString* Token::Value() const
@@ -101,10 +100,5 @@ namespace mot
     const char* Token::Filename() const
     {
         return _text.Content()->Filename();
-    }
-
-    void Token::PrintFileAndPosition(FILE* stream, bool endLine) const
-    {
-        _text.Content()->PrintFileAndPosition(stream, _text.Start(), endLine);
     }
 }

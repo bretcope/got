@@ -1,5 +1,5 @@
-#ifndef MOT_GOTSTRING_H
-#define MOT_GOTSTRING_H
+#ifndef MOT_MOTSTRING_H
+#define MOT_MOTSTRING_H
 
 
 #include <cstdlib>
@@ -43,6 +43,7 @@ namespace mot
         MotString& operator=(MotString) noexcept;
 
         friend std::ostream& operator<<(std::ostream& os, const MotString& s);
+        friend std::ostream& operator<<(std::ostream& os, const MotString* s);
 
         friend void swap(MotString& a, MotString& b) noexcept;
 
@@ -99,11 +100,6 @@ namespace mot
         bool IsCaseInsensitiveEqualTo(const MotString* str) const;
 
         /**
-         * Prints the string to a file stream.
-         */
-        void Print(FILE* stream) const;
-
-        /**
          * Returns a pointer to an empty MotString. Use this method to avoid allocating every time you need an empty string on the heap.
          */
         static const MotString* Empty();
@@ -126,4 +122,4 @@ namespace mot
     };
 }
 
-#endif //MOT_GOTSTRING_H
+#endif //MOT_MOTSTRING_H

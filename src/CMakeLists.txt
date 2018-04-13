@@ -1,12 +1,18 @@
 project(cmot)
 
 add_library(cmotlib
+            io/Console.cpp
+            io/Console.h
+            io/ConsoleType.h
             io/FileContent.cpp
             io/FileContent.h
             io/FileReader.cpp
             io/FileReader.h
             io/FileSpan.cpp
             io/FileSpan.h
+            io/printing/FmtPosition.cpp
+            io/printing/FmtPosition.h
+            Macros.h
             parsing/Lexer.cpp
             parsing/Lexer.h
             parsing/Nodes.h
@@ -22,7 +28,6 @@ add_library(cmotlib
             parsing/SyntaxElement.h
             parsing/Token.cpp
             parsing/Token.h
-            text/Collections.h
             text/MotString.cpp
             text/MotString.h
             text/Utf8.cpp

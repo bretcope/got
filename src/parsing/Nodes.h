@@ -42,6 +42,12 @@ namespace mot
         return "";
     }
 
+    inline std::ostream& operator<<(std::ostream& os, NodeType type)
+    {
+        os << GetNodeTypeName(type);
+        return os;
+    }
+
     class Node : public SyntaxElement
     {
     public:
@@ -55,7 +61,6 @@ namespace mot
         int VisitTokens(std::function<void(const Token*)> callback) const;
         int VisitNodes(std::function<void(const Node* node, int level)> callback) const;
         FileSpan Position() const;
-        void PrintFileAndPosition(FILE* stream, bool endLine = true) const;
     };
 
     class FileNode;

@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "Parser.h"
 #include "Lexer.h"
+#include "../io/printing/FmtPosition.h"
 
 namespace mot
 {
@@ -9,10 +10,10 @@ namespace mot
     {
         Lexer* _lexer;
         FileContent* _content;
-        FILE* _errStream;
+        const Console& _console;
 
     public:
-        Parser(FILE* errStream, Lexer* lexer, FileContent* content);
+        Parser(const Console& console, Lexer* lexer, FileContent* content);
         Parser(const Parser&) = delete;
         Parser(Parser&&) = delete;
         ~Parser();
@@ -38,20 +39,20 @@ namespace mot
         void UnexpectedToken(int expectedCount, TokenType* expectedList);
     };
 
-    Parser::Parser(FILE* errStream, Lexer* lexer, FileContent* content) :
+    Parser::Parser(const Console& console, Lexer* lexer, FileContent* content) :
             _lexer(lexer),
             _content(content),
-            _errStream(errStream)
+            _console(console)
     {
     }
 
     Parser::~Parser() = default;
 
 
-    bool ParseConfigurationFile(FILE* errStream, FileContent* content, FileNode** out_tree)
+    bool ParseConfigurationFile(const Console& console, FileContent* content, FileNode** out_tree)
     {
-        Lexer lexer(errStream, content);
-        Parser parser(errStream, &lexer, content);
+        Lexer lexer(console, content);
+        Parser parser(console, &lexer, content);
 
         return parser.ParseFile(out_tree);
     }
@@ -300,41 +301,35 @@ PropertyBlock
 
     void Parser::UnexpectedToken(TokenType expected0, TokenType expected1)
     {
-
         TokenType expected[] = {expected0, expected1};
         UnexpectedToken(2, expected);
     }
 
     void Parser::UnexpectedToken(int expectedCount, TokenType* expectedList)
     {
-        // todo: this error message could use a lot of improvement - like at least giving line numbers
-
         auto token = _lexer->Advance();
 
-        if (token == nullptr)
+        if (token->Type() != TokenType::Error)
         {
-            fprintf(_errStream, "Parser Error: Lexer returned an null token.\n    File: \"%s\"", _content->Filename());
-        }
-        else
-        {
-            fprintf(_errStream, "Error: Cannot parse configuration file\n\n");
-            fprintf(_errStream, "    Unexpected Token \"%s\"\n", GetTokenTypeName(token->Type()));
-            fprintf(_errStream, "      at \"%s\" %u\n", _content->Filename(), token->Text().Start());
-        }
+            _console.Error() << "Error: Unexpected Token " << token->Type() << '\n';
+            _console.Error() << FmtPosition(token);
 
-        if (expectedCount > 0)
-        {
-            fprintf(_errStream, "\n    Expected: ");
-
-            for (auto i = 0; i < expectedCount; i++)
+            if (expectedCount > 0)
             {
-                if (i > 0)
-                    fwrite(", ", 1, 2, _errStream);
+                _console.Error() << "    Expected: ";
 
-                fprintf(_errStream, "%s", GetTokenTypeName(expectedList[i]));
+                for (auto i = 0; i < expectedCount; i++)
+                {
+                    if (i > 0)
+                        _console.Error() << ", ";
+
+                    _console.Error() << expectedList[i];
+                }
+
+                _console.Error() << '\n';
             }
-
-            fwrite("\n", 1, 1, _errStream);
         }
+
+        delete token;
     }
 }

@@ -12,11 +12,7 @@ namespace mot
 {
     enum class TokenType
     {
-        Error_UnexpectedCharacter,
-        Error_MisalignedIndentation,
-        Error_UnterminatedString,
-        Error_TabIndent,
-        Error_, // all types less than this must be error tokens. This value gives a reference for doing comparisons (e.g. type <= Error_).
+        Error,
 
         StartOfInput,
 
@@ -41,16 +37,8 @@ namespace mot
     {
         switch (type)
         {
-            case TokenType::Error_UnexpectedCharacter:
-                return "Error_UnexpectedCharacter";
-            case TokenType::Error_MisalignedIndentation:
-                return "Error_MisalignedIndentation";
-            case TokenType::Error_UnterminatedString:
-                return "Error_UnterminatedString";
-            case TokenType::Error_TabIndent:
-                return "Error_TabIndent";
-            case TokenType::Error_:
-                return "Error_";
+            case TokenType::Error:
+                return "Error";
 
             case TokenType::StartOfInput:
                 return "StartOfInput";
@@ -82,6 +70,12 @@ namespace mot
         return "";
     }
 
+    inline std::ostream& operator<<(std::ostream& os, TokenType type)
+    {
+        os << GetTokenTypeName(type);
+        return os;
+    }
+
     class Token final : public SyntaxElement
     {
     private:
@@ -104,16 +98,11 @@ namespace mot
 
         const FileSpan& Text() const;
 
-        void DebugPrint(FILE* stream, bool positions, bool color) const;
+        void DebugPrint(std::ostream& os, bool positions, bool color) const;
 
         const MotString* Value() const;
 
         const char* Filename() const;
-
-        /**
-         * Prints the filename followed by the line and column numbers, and an optional line feed.
-         */
-        void PrintFileAndPosition(FILE* stream, bool endLine = true) const;
     };
 }
 

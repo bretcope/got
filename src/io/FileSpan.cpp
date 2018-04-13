@@ -16,6 +16,15 @@ namespace mot
 
     FileSpan::~FileSpan() = default;
 
+    std::ostream& operator<<(std::ostream& os, FileSpan& span)
+    {
+        auto length = span.Length();
+        if (length > 0)
+            os.write(&span._content->Data()[span._start], length);
+
+        return os;
+    }
+
     const FileContent* FileSpan::Content() const
     {
         return _content;
@@ -47,16 +56,6 @@ namespace mot
         return length;
     }
 
-    size_t FileSpan::Print(FILE* stream) const
-    {
-        auto length = Length();
-
-        if (length == 0)
-            return 0;
-
-        return fwrite(&_content->Data()[_start], 1, length, stream);
-    }
-
     MotString* FileSpan::NewMotString() const
     {
         auto length = Length();
@@ -73,10 +72,5 @@ namespace mot
         }
 
         return new MotString(str, length, true);
-    }
-
-    void FileSpan::PrintFileAndPosition(FILE* stream, bool endLine) const
-    {
-        _content->PrintFileAndPosition(stream, _start, endLine);
     }
 }

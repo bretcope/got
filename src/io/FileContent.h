@@ -57,11 +57,6 @@ namespace mot
         void ResetLineMarkers();
 
         uint32_t MarkLine(uint32_t position);
-
-        /**
-         * Prints the filename followed by the line and column numbers, and an optional line feed.
-         */
-        void PrintFileAndPosition(FILE* stream, uint32_t position, bool endLine = true) const;
     };
 }
 

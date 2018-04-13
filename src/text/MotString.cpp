@@ -82,6 +82,11 @@ namespace mot
         return os;
     }
 
+    std::ostream& operator<<(std::ostream& os, const MotString* s)
+    {
+        return os << *s;
+    }
+
     void swap(MotString& a, MotString& b) noexcept
     {
         using std::swap;
@@ -185,11 +190,6 @@ namespace mot
         return AreCaseInsensitiveEqual(this, str);
     }
 
-    void MotString::Print(FILE* stream) const
-    {
-        fwrite(_data, 1, _byteCount, stream);
-    }
-
     const MotString* MotString::Empty()
     {
         static const MotString empty;
@@ -244,7 +244,7 @@ namespace mot
         }
         else // case-insensitive
         {
-            // todo: this could use some performance work, but another day
+            // this could use some performance work, but another day
             for (auto i = 0u; i < commonLen;)
             {
                 char32_t aCh, bCh;
