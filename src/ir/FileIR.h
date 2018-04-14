@@ -28,6 +28,11 @@ namespace mot
 
     struct RepoIR
     {
+        const MotString* name;
+        const MotString* config;
+        ByStringPtr<MotString*> remotes;
+        StringPtrSet aliases;
+        OverrideMode overrideMode;
     };
 
     class FileIR
