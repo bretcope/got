@@ -64,37 +64,42 @@ namespace mot
         auto lineStart = 0u;
 
         // perform binary search to find the line number
-        auto i = count / 2;
+        auto left = 0u;
+        auto right = count;
+        auto i = right / 2;
         while (true)
         {
-            assert(i < count);
-            auto start = lines[i];
+            assert(i < right);
+            assert(i >= left);
+            assert(right <= count);
 
-            if (position >= start && (i + 1 == count || position < lines[i + 1]))
+            lineStart = lines[i];
+
+            if (position >= lineStart && (i + 1 == count || position < lines[i + 1]))
             {
                 if (out_lineNumber != nullptr)
                     *out_lineNumber = i;
 
                 if (out_lineStart != nullptr)
-                    *out_lineStart = start;
-
-                lineStart = start;
+                    *out_lineStart = lineStart;
 
                 break;
             }
 
-            if (position < start)
+            if (position < lineStart)
             {
                 // try earlier in the list
                 assert(i != 0);
-                i = i / 2;
+                right = i;
             }
             else
             {
                 // try later in the list
-                assert(i + 1 < count);
-                i += (count - i) / 2;
+                assert(i + 1 < right);
+                left = i + 1;
             }
+
+            i = left + (right - left) / 2;
         }
 
         assert(position >= lineStart);
