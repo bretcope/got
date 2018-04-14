@@ -14,23 +14,23 @@ namespace mot
         {
             delete *it;
         }
-
-        for (auto it = _content.begin(); it != _content.end(); ++it)
-        {
-            delete *it;
-        }
     }
 
     bool Profile::Load(const Console& console, const char* filename, uint32_t maxFileSize)
     {
-        FileContent* profileContent;
-        if (!LoadFile(console, filename, maxFileSize, &profileContent))
-            return false;
+        FileContent* contentPtr;
 
-        _content.push_back(profileContent);
+        {
+            auto profileContent = LoadFile(console, filename, maxFileSize);
+            if (profileContent == nullptr)
+                return false;
+
+            contentPtr = profileContent.get();
+            _content.push_back(std::move(profileContent));
+        }
 
         FileNode* profileNode;
-        if (!ParseConfigurationFile(console, profileContent, &profileNode))
+        if (!ParseConfigurationFile(console, contentPtr, &profileNode))
             return false;
 
         _fileNodes.push_back(profileNode);

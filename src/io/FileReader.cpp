@@ -5,14 +5,12 @@
 
 namespace mot
 {
-    bool LoadFile(const Console& console, const char* filename, uint32_t maxSize, FileContent** out_content)
+    UP<FileContent> LoadFile(const Console& console, const char* filename, uint32_t maxSize)
     {
-        *out_content = nullptr;
-
         if (filename == nullptr)
         {
             console.Error() << "Error: Cannot load file. Filename is null.\n";
-            return false;
+            return nullptr;
         }
 
         auto nameLen = strnlen(filename, MAX_FILENAME_SIZE);
@@ -24,7 +22,7 @@ namespace mot
             else
                 console.Error() << "Error: Cannot load file. Filename is too long.\n";
 
-            return false;
+            return nullptr;
         }
 
         std::ifstream fs;
@@ -32,7 +30,7 @@ namespace mot
         if (!fs.is_open())
         {
             console.Error() << "Error: Unable to open file \"" << filename << "\"\n";
-            return false;
+            return nullptr;
         }
 
         auto endPos = fs.tellg();
@@ -51,23 +49,21 @@ namespace mot
         }
 
         auto size = (uint32_t)endPos;
-        auto content = new char[size];
+        UP<char[]> data{new char[size]};
         fs.seekg(0, std::ifstream::beg);
-        fs.read(content, size);
+        fs.read(data.get(), size);
 
         if (fs.fail() || fs.tellg() != endPos)
         {
-            delete content;
             console.Error() << "Error: Failed while reading file \"" << filename << "\"\n";
-            return false;
+            return nullptr;
         }
 
         // make a copy of the filename to be owned by FileContent
         // todo: we should perform some sort of resolution on the file before loading, and we could use that as an opportunity to make a copy of the name
-        auto nameCopy = new char[nameLen + 1];
-        memcpy(nameCopy, filename, nameLen + 1);
+        UP<char[]> nameCopy{new char[nameLen + 1]};
+        memcpy(nameCopy.get(), filename, nameLen + 1);
 
-        *out_content = new FileContent(nameCopy, content, size);
-        return true;
+        return UP<FileContent>{new FileContent(nameCopy.release(), data.release(), size)};
     }
 }

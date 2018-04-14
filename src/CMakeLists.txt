@@ -1,6 +1,7 @@
 project(cmot)
 
 add_library(cmotlib
+            Common.h
             io/Console.cpp
             io/Console.h
             io/ConsoleType.h

@@ -3,8 +3,10 @@
 
 
 #include <cstdint>
+#include <memory>
 #include "FileContent.h"
 #include "Console.h"
+#include "../Common.h"
 
 namespace mot
 {
@@ -15,10 +17,9 @@ namespace mot
      * @param filename The name of the file. A copy of this string is made and owned by the returned FileContent.
      * @param maxSize The maximum size of the file to load (in bytes).
      * @param errStream The file stream where to print error messages (e.g. stderr).
-     * @param [out] out_content The loaded content, if successful.
-     * @return True if the file was loaded successfully.
+     * @return The file content, if successful, otherwise nullptr.
      */
-    bool LoadFile(const Console& console, const char* filename, uint32_t maxSize, FileContent** out_content);
+    UP<FileContent> LoadFile(const Console& console, const char* filename, uint32_t maxSize);
 }
 
 #endif //MOT_FILE_H

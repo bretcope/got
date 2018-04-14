@@ -3,6 +3,7 @@
 
 
 #include <cstdint>
+#include <memory>
 
 namespace mot
 {

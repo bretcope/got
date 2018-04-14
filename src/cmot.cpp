@@ -99,21 +99,15 @@ int main(int argc, char** argv)
 
     const char* filename = "sample_profile";
 
-    FileContent* content;
     const uint32_t MAX_SIZE = 10 * 1024 * 1024;
-    if (LoadFile(console, filename, MAX_SIZE, &content))
-    {
+    auto content = LoadFile(console, filename, MAX_SIZE);
+    if (content == nullptr)
+        return 1;
+
 //        std::cout.write(content, size);
 //        DebugLexer(content);
 //        DebugParser(console, content);
-        DebugIR(console, content);
-
-        delete content;
-    }
-    else
-    {
-        return 1;
-    }
+    DebugIR(console, content.get());
 
     // execute command https://stackoverflow.com/questions/478898/how-to-execute-a-command-and-get-output-of-command-within-c-using-posix
 

@@ -8,6 +8,7 @@
 #include "../text/Collections.h"
 #include "Repo.h"
 #include "../io/Console.h"
+#include "../Common.h"
 
 namespace mot
 {
@@ -17,7 +18,7 @@ namespace mot
         const MotString* _name = nullptr;
         ByStringPtr<const Prefix> _prefixes;
         ByStringPtr<const Repo> _repos;
-        std::vector<FileContent*> _content;
+        std::vector<UP<FileContent>> _content;
         std::vector<FileNode*> _fileNodes;
 
     public:
