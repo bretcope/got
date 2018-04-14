@@ -39,6 +39,8 @@ add_library(cmotlib
             parsing/Token.cpp
             parsing/Token.h
             text/Collections.h
+            text/Constants.cpp
+            text/Constants.h
             text/MotString.cpp
             text/MotString.h
             text/Utf8.cpp
