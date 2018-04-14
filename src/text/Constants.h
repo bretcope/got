@@ -14,11 +14,14 @@ namespace mot
         extern const MotString FILE;
         extern const MotString INCLUDE;
         extern const MotString OVERRIDE;
+        extern const MotString MERGE;
+        extern const MotString NONE;
         extern const MotString PATH;
         extern const MotString PREFIX;
         extern const MotString PROFILE;
         extern const MotString REMOTE;
         extern const MotString RENAME;
+        extern const MotString REPLACE;
         extern const MotString REPO;
         extern const MotString RESOURCE;
     }

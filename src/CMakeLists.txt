@@ -17,6 +17,7 @@ add_library(cmotlib
             ir/ProfileIR.cpp
             ir/ProfileIR.h
             Macros.h
+            models/OverrideMode.h
             models/Prefix.cpp
             models/Prefix.h
             models/Profile.cpp

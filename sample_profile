@@ -31,10 +31,11 @@ prefix work
     env win: /c/code
     env unix: ~/code
     env default: ~/mine # default path to use when there isn't a property that matches the current environment
-    override: true # if one of your include files defines this prefix, override must be set to true
+    override: replace # if one of your include files defines this prefix, override must be set to true
 
 prefix personal
     env win: /c/bret
+    env wsl: /mnt/c/bret
     env unix: ~/git
 
 prefix csharp
@@ -44,7 +45,7 @@ repo bosunreporter
     remote origin: git@github.com:bretcope/BosunReporter.git
     path: $csharp/BosunReporter
     alias bosun
-    override: merge|replace
+    override: replace # or merge or none
     config > # comments should work after the > symbol, but not within the block itself
         Literal text of .gitconfig if there is a local one in the repo
         This could be many lines

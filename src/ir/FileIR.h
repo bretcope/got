@@ -6,6 +6,7 @@
 #include "../parsing/Nodes.h"
 #include "../text/Collections.h"
 #include "../io/Console.h"
+#include "../models/OverrideMode.h"
 
 namespace mot
 {
@@ -19,10 +20,10 @@ namespace mot
 
     struct PrefixIR
     {
-        const PropertyNode* Node;
-        const MotString* Name;
-        ByStringPtr<const MotString*> PathByEnvironment;
-        bool IsOverride;
+        const PropertyNode* node;
+        const MotString* name;
+        ByStringPtr<const MotString*> pathByEnvironment;
+        OverrideMode overrideMode;
     };
 
     struct RepoIR

@@ -136,15 +136,15 @@ namespace mot
         if (_prefixes.count(prefixName) > 0)
         {
             console.Error() << "Error: Prefix \"" << prefixName << "\" already exists (note: prefixes are case-insensitive).\n";
-            console.Error() << "    original: " << FmtPosition(_prefixes.at(prefixName).Node).NoAtPrefix();
+            console.Error() << "    original: " << FmtPosition(_prefixes.at(prefixName).node).NoAtPrefix();
             console.Error() << "    duplicate: " << FmtPosition(prop).NoAtPrefix();
             return false;
         }
 
         PrefixIR ir{};
-        ir.Node = prop;
-        ir.Name = prefixName;
-        ir.IsOverride = false;
+        ir.node = prop;
+        ir.name = prefixName;
+        ir.overrideMode = OverrideMode::None;
 
         if (prop->HasValue())
         {
@@ -156,7 +156,7 @@ namespace mot
                 return false;
             }
 
-            ir.PathByEnvironment[&Constants::DEFAULT] = value;
+            ir.pathByEnvironment[&Constants::DEFAULT] = value;
         }
         else if (prop->HasBlock())
         {
@@ -179,7 +179,7 @@ namespace mot
                         return false;
                     }
 
-                    if (ir.PathByEnvironment.count(envName) > 0)
+                    if (ir.pathByEnvironment.count(envName) > 0)
                     {
                         console.Error() << "Error: Duplicate environment \"" << envName << "\" in prefix \"" << prefixName << "\"\n";
                         console.Error() << FmtPosition(childProp);
@@ -197,7 +197,7 @@ namespace mot
                     // todo: if value has invalid characters
 
                     // Everything looks good so far. The path itself might still be invalid, but we can't test that until we resolve the prefixes.
-                    ir.PathByEnvironment[envName] = envPath;
+                    ir.pathByEnvironment[envName] = envPath;
                 }
                 else if (Constants::OVERRIDE.IsCaseInsensitiveEqualTo(childPropType))
                 {
@@ -218,17 +218,21 @@ namespace mot
                     }
 
                     auto overrideValue = childProp->HasValue() ? childProp->ValueNode()->Value() : MotString::Empty();
-                    if (MotString("true").IsCaseInsensitiveEqualTo(overrideValue))
+                    if (Constants::MERGE.IsCaseInsensitiveEqualTo(overrideValue))
                     {
-                        ir.IsOverride = true;
+                        ir.overrideMode = OverrideMode::Merge;
                     }
-                    else if (MotString("false").IsCaseInsensitiveEqualTo(overrideValue))
+                    else if (Constants::REPLACE.IsCaseInsensitiveEqualTo(overrideValue))
                     {
-                        ir.IsOverride = false; // technical redundant, but eh
+                        ir.overrideMode = OverrideMode::Replace;
+                    }
+                    else if (Constants::NONE.IsCaseInsensitiveEqualTo(overrideValue))
+                    {
+                        ir.overrideMode = OverrideMode::None; // technical redundant, but eh
                     }
                     else
                     {
-                        console.Error() << "Error: Override property must be \"true\" or \"false\"\n";
+                        console.Error() << "Error: Override property must be \"merge\", \"replace\", or \"none\"\n";
                         console.Error() << FmtPosition(childProp);
                         return false;
                     }
