@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 2.6.2)
 project(mot)
 
+set(CMAKE_CXX_STANDARD 17)
+
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -pedantic -Werror=return-type")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Werror=return-type")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     # Google Test uses TR1 Tuples, which are deprecated in VC++. We're disabling the warning until Google Test fixes it.
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING")
