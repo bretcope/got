@@ -48,7 +48,7 @@ namespace mot
             os.write(" ", 1);
 
             if ((flags & FmtPositionFlags::Line) != FmtPositionFlags::None)
-                os << "line " << line + 1;
+                os << line + 1;
 
             if ((flags & FmtPositionFlags::Column) != FmtPositionFlags::None)
                 os << ':' << column + 1;
