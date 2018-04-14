@@ -81,7 +81,7 @@ namespace mot
         return _block != nullptr;
     }
 
-    const PropertyValueNode* PropertyNode::Value() const
+    const PropertyValueNode* PropertyNode::ValueNode() const
     {
         return _value;
     }

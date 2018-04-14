@@ -5,6 +5,7 @@
 #include "parsing/Lexer.h"
 #include "parsing/Parser.h"
 #include "text/Utf8.h"
+#include "ir/FileIR.h"
 
 using namespace mot;
 
@@ -36,6 +37,25 @@ void DebugParser(const Console& console, FileContent* content)
 
         tree->VisitNodes(callback);
         delete tree;
+    }
+}
+
+void DebugIR(const Console& console, FileContent* content)
+{
+    FileNode* tree;
+    if (ParseConfigurationFile(console, content, &tree))
+    {
+        FileIR ir(console, tree, false);
+
+        if (ir.IsValid())
+        {
+            auto prefixes = ir.Prefixes();
+            console.Out() << "Found " << prefixes.size() << " prefixes.\n";
+            for (auto kvp : prefixes)
+            {
+                console.Out() << "prefix: " << kvp.first << "\n";
+            }
+        }
     }
 }
 
@@ -85,7 +105,8 @@ int main(int argc, char** argv)
     {
 //        std::cout.write(content, size);
 //        DebugLexer(content);
-        DebugParser(console, content);
+//        DebugParser(console, content);
+        DebugIR(console, content);
 
         delete content;
     }

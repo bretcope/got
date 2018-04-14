@@ -12,7 +12,17 @@ add_library(cmotlib
             io/FileSpan.h
             io/printing/FmtPosition.cpp
             io/printing/FmtPosition.h
+            ir/FileIR.cpp
+            ir/FileIR.h
+            ir/ProfileIR.cpp
+            ir/ProfileIR.h
             Macros.h
+            models/Prefix.cpp
+            models/Prefix.h
+            models/Profile.cpp
+            models/Profile.h
+            models/Repo.cpp
+            models/Repo.h
             parsing/Lexer.cpp
             parsing/Lexer.h
             parsing/Nodes.h
@@ -28,6 +38,7 @@ add_library(cmotlib
             parsing/SyntaxElement.h
             parsing/Token.cpp
             parsing/Token.h
+            text/Collections.h
             text/MotString.cpp
             text/MotString.h
             text/Utf8.cpp

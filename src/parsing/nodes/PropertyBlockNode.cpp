@@ -36,4 +36,9 @@ namespace mot
     {
         return _indent->Filename();
     }
+
+    const PropertyListNode* PropertyBlockNode::PropertyList() const
+    {
+        return _propertyList;
+    }
 }

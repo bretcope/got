@@ -38,4 +38,9 @@ namespace mot
     {
         return _specifier->Filename();
     }
+
+    const MotString* PropertyValueNode::Value() const
+    {
+        return _text->Value();
+    }
 }

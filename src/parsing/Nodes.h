@@ -145,7 +145,7 @@ namespace mot
 
         bool HasBlock() const;
 
-        const PropertyValueNode* Value() const;
+        const PropertyValueNode* ValueNode() const;
 
         const PropertyBlockNode* Block() const;
     };
@@ -188,8 +188,7 @@ namespace mot
         void GetSyntaxElements(std::vector<const SyntaxElement*>& list) const override;
         const char* Filename() const override;
 
-        // todo: method to evaluate (parse) the actual value out of the _text token.
-        // todo: const char* Value() const;
+        const MotString* Value() const;
     };
 
     class PropertyBlockNode final : public Node
@@ -209,6 +208,8 @@ namespace mot
 
         void GetSyntaxElements(std::vector<const SyntaxElement*>& list) const override;
         const char* Filename() const override;
+
+        const PropertyListNode* PropertyList() const;
     };
 }
 
