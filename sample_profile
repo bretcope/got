@@ -25,7 +25,7 @@ include b
     rename "$b.work": b2.work # rename a single prefix
     #prefix personal:
 
-#prefix something: ~/code # all environments
+prefix something: ~/code # all environments
 
 prefix work
     env win: /c/code
