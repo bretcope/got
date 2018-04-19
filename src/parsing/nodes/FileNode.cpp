@@ -3,18 +3,12 @@
 
 namespace mot
 {
-    FileNode::FileNode(PropertyListNode* propertyList, Token* endOfInput) :
-            _propertyList(propertyList),
-            _endOfInput(endOfInput)
+    FileNode::FileNode(UP<PropertyListNode>&& propertyList, UP<Token>&& endOfInput) :
+            _propertyList{std::move(propertyList)},
+            _endOfInput{std::move(endOfInput)}
     {
-        assert(propertyList != nullptr);
-        assert(endOfInput != nullptr && endOfInput->Type() == TokenType::EndOfInput);
-    }
-
-    FileNode::~FileNode()
-    {
-        delete _propertyList;
-        delete _endOfInput;
+        assert(_propertyList != nullptr);
+        assert(_endOfInput != nullptr && _endOfInput->Type() == TokenType::EndOfInput);
     }
 
     NodeType FileNode::Type() const
@@ -24,17 +18,12 @@ namespace mot
 
     void FileNode::GetSyntaxElements(std::vector<const SyntaxElement*>& list) const
     {
-        list.push_back(_propertyList);
-        list.push_back(_endOfInput);
+        list.push_back(_propertyList.get());
+        list.push_back(_endOfInput.get());
     }
 
-    const PropertyListNode* FileNode::PropertyList() const
+    const PropertyListNode& FileNode::PropertyList() const
     {
-        return _propertyList;
-    }
-
-    const char* FileNode::Filename() const
-    {
-        return _endOfInput->Filename();
+        return *_propertyList;
     }
 }

@@ -7,45 +7,52 @@
 #include <cstdio>
 #include <ostream>
 #include "Utf8.h"
+#include "../Common.h"
 
 namespace mot
 {
     class MotString
     {
     private:
-        const char* _data;
-        uint32_t _byteCount;
-        mutable uint32_t _hashCode = 0; // lazy loaded
-        mutable uint32_t _charCount = 0; // lazy loaded
-        bool _isOwnerOfData;
+        class Data
+        {
+        public:
+            SP<const char> m_sharedStr;
+            const char* m_str;
+            uint32_t m_byteLength;
+            uint32_t m_hashCode = 0; // lazy loaded
+            uint32_t m_charCount = 0; // lazy loaded
+
+            Data(SP<const char> sharedStr, const char* str, uint32_t byteLength);
+        };
+
+        SP<Data> m_data;
+
+        explicit MotString(SP<Data> data);
 
     public:
         /**
          *
-         * @param data The raw UTF-8 string.
-         * @param byteCount The number of bytes which are meaningful (excludes the null terminator).
-         * @param transferOwnership If true, the data will be deallocated when the MotString is destructed.
+         * @param sharedStr The raw UTF-8 string.
+         * @param offset The offset into the shared string where the MotString should start.
+         * @param byteLength The number of bytes which are meaningful (excludes the null terminator).
          */
-        MotString(const char* data, uint32_t byteCount, bool transferOwnership);
+        MotString(SP<const char> sharedStr, uint32_t offset, uint32_t byteLength);
 
         /**
          * Creates a MotString based off of a null-terminated C string.
          *
-         * \warning The MotString does not control the lifetime of the C string. This constructor is primarily intended for creating MotStrings based off of
+         * \warning The MotString does not control the lifetime of the C string. This constructor is only intended for creating MotStrings based off of
          * string literals.
          */
-        explicit MotString(const char* str);
-        MotString();
-        MotString(const MotString&);
-        MotString(MotString&&) noexcept;
-        ~MotString();
+        explicit MotString(const char* literal);
 
-        MotString& operator=(MotString) noexcept;
+        /**
+         * Creates an empty string.
+         */
+        MotString();
 
         friend std::ostream& operator<<(std::ostream& os, const MotString& s);
-        friend std::ostream& operator<<(std::ostream& os, const MotString* s);
-
-        friend void swap(MotString& a, MotString& b) noexcept;
 
         /**
          * Returns the number of bytes which are meaningful (excludes the null terminator).
@@ -68,43 +75,35 @@ namespace mot
          * Creates a substring based on a byte offset and length. Does not enforce that the substring starts or ends on valid UTF-8 boundaries.
          * @param start Byte offset where the substring should start.
          * @param length Length (in bytes) of the substring.
-         * @param copyData If true, a copy of the data will be made. Otherwise the substring will point to the original data object, whose lifetime is not
-         * managed by the substring.
-         * @param out_subString The MotString which will receive the substring.
          */
-        void SubString(uint32_t start, uint32_t length, bool copyData, MotString& out_subString) const;
+        MotString SubString(uint32_t start, uint32_t length) const;
 
         /**
          * Returns zero if the two strings have identical values, a negative value if a < b, and a positive if a > b. The ordering is based on the binary encoding.
          */
-        static int Compare(const MotString* a, const MotString* b);
+        static int Compare(const MotString& a, const MotString& b);
 
         /**
          * Compares a and b in a case insensitive way. Returns 0 when a == b, negative when a < b, and positive when a > b. The comparison is based on the
          * uppercase variant of each code point in the string.
          */
-        static int CompareCaseInsensitive(const MotString* a, const MotString* b);
+        static int CompareCaseInsensitive(const MotString& a, const MotString& b);
 
         /**
          * Returns true if the two strings have identical values.
          */
-        static bool AreEqual(const MotString* a, const MotString* b);
+        static bool AreEqual(const MotString& a, const MotString& b);
 
         /**
          * Returns true if the two strings are equal when compared in a case-insensitive way.
          */
-        static bool AreCaseInsensitiveEqual(const MotString* a, const MotString* b);
+        static bool AreCaseInsensitiveEqual(const MotString& a, const MotString& b);
 
-        bool IsEqualTo(const MotString* str) const;
+        bool IsEqualTo(const MotString& str) const;
 
-        bool IsCaseInsensitiveEqualTo(const MotString* str) const;
+        bool IsCaseInsensitiveEqualTo(const MotString& str) const;
 
-        /**
-         * Returns a pointer to an empty MotString. Use this method to avoid allocating every time you need an empty string on the heap.
-         */
-        static const MotString* Empty();
-
-        static bool IsEmpty(const MotString* s);
+        static bool IsEmpty(const MotString& s);
 
     private:
 
@@ -116,7 +115,7 @@ namespace mot
          * @param orderedResult If true, the return value guaranteed to be negative if a < b and positive if a > b. If false, the return value is only guaranteed
          * to be non-zero when the strings are not equal.
          */
-        static int CompareImpl(const MotString* a, const MotString* b, bool caseSensitive, bool orderedResult);
+        static int CompareImpl(const MotString& a, const MotString& b, bool caseSensitive, bool orderedResult);
 
         void CalculateHashAndCharacterCount() const;
     };

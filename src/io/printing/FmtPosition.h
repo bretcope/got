@@ -25,10 +25,10 @@ namespace mot
         FmtPositionFlags _flags;
 
     public:
-        explicit FmtPosition(const Node* node);
-        explicit FmtPosition(const Token* token);
+        explicit FmtPosition(const Node& node);
+        explicit FmtPosition(const Token& token);
         explicit FmtPosition(const FileSpan& span);
-        FmtPosition(const FileContent* content, uint32_t position);
+        FmtPosition(const FileContent& content, uint32_t position);
 
         friend std::ostream& operator<<(std::ostream& os, const FmtPosition& s);
 

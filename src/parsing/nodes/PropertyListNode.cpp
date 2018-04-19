@@ -3,23 +3,10 @@
 
 namespace mot
 {
-    PropertyListNode::PropertyListNode(PropertyNode** properties, int count) :
-            _properties(properties),
-            _count(count)
+    PropertyListNode::PropertyListNode(std::vector<UP<PropertyNode>>&& properties) :
+            _properties{std::move(properties)}
     {
-        assert(properties != nullptr && count > 0);
-    }
-
-    PropertyListNode::~PropertyListNode()
-    {
-        auto props = _properties;
-        auto count = _count;
-        for (auto i = 0; i < count; i++)
-        {
-            delete props[i];
-        }
-
-        delete[] props;
+        assert(_properties.size() > 0);
     }
 
     NodeType PropertyListNode::Type() const
@@ -29,27 +16,19 @@ namespace mot
 
     void PropertyListNode::GetSyntaxElements(std::vector<const SyntaxElement*>& list) const
     {
-        auto props = _properties;
-        auto count = _count;
-
-        for (auto i = 0; i < count; i++)
+        for (auto it = _properties.begin(); it != _properties.end(); ++it)
         {
-            list.push_back(props[i]);
+            list.push_back((*it).get());
         }
     }
 
-    const char* PropertyListNode::Filename() const
+    uint32_t PropertyListNode::Count() const
     {
-        return _properties[0]->Filename();
+        return (uint32_t)_properties.size();
     }
 
-    const PropertyNode* PropertyListNode::GetProperty(int index) const
+    const PropertyNode& PropertyListNode::Property(uint32_t index) const
     {
-        return _properties[index];
-    }
-
-    int PropertyListNode::Count() const
-    {
-        return _count;
+        return *_properties[index];
     }
 }

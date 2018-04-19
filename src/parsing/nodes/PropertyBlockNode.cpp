@@ -3,21 +3,14 @@
 
 namespace mot
 {
-    PropertyBlockNode::PropertyBlockNode(Token* indent, PropertyListNode* propertyList, Token* outdent) :
-            _indent(indent),
-            _propertyList(propertyList),
-            _outdent(outdent)
+    PropertyBlockNode::PropertyBlockNode(UP<Token>&& indent, UP<PropertyListNode>&& propertyList, UP<Token>&& outdent) :
+            _indent{std::move(indent)},
+            _propertyList{std::move(propertyList)},
+            _outdent{std::move(outdent)}
     {
-        assert(indent != nullptr && indent->Type() == TokenType::Indent);
-        assert(propertyList != nullptr);
-        assert(outdent != nullptr && outdent->Type() == TokenType::Outdent);
-    }
-
-    PropertyBlockNode::~PropertyBlockNode()
-    {
-        delete _indent;
-        delete _propertyList;
-        delete _outdent;
+        assert(_indent != nullptr && _indent->Type() == TokenType::Indent);
+        assert(_propertyList != nullptr);
+        assert(_outdent != nullptr && _outdent->Type() == TokenType::Outdent);
     }
 
     NodeType PropertyBlockNode::Type() const
@@ -27,18 +20,13 @@ namespace mot
 
     void PropertyBlockNode::GetSyntaxElements(std::vector<const SyntaxElement*>& list) const
     {
-        list.push_back(_indent);
-        list.push_back(_propertyList);
-        list.push_back(_outdent);
+        list.push_back(_indent.get());
+        list.push_back(_propertyList.get());
+        list.push_back(_outdent.get());
     }
 
-    const char* PropertyBlockNode::Filename() const
+    const PropertyListNode& PropertyBlockNode::PropertyList() const
     {
-        return _indent->Filename();
-    }
-
-    const PropertyListNode* PropertyBlockNode::PropertyList() const
-    {
-        return _propertyList;
+        return *_propertyList;
     }
 }

@@ -14,7 +14,7 @@ namespace mot
     {
     private:
         const Console& _console;    ///< Stream where error messages will be printed.
-        FileContent* _content;      ///< The file content to be lexed.
+        FileContent& _content;      ///< The file content to be lexed.
         const char* _input;         ///< Raw binary representation of the file to lex (copy of _content->Data()). Encoding is expected to be UTF-8.
         uint32_t _position = 0;     ///< Current byte position in the input;
         uint32_t _size;             ///< The size (in bytes) of the input (copy of _content->Data()).
@@ -22,44 +22,43 @@ namespace mot
         uint32_t _lineStart;        ///< Byte position of the first character of the current line.
         uint32_t _lineSpaces;       ///< The number of spaces before first non-space character on the current line. Used to detect indentation levels.
 
-        Token* _nextToken = nullptr;                        ///< Next unconsumed token, stored here for peek operations.
+        UP<Token> _nextToken = nullptr;                     ///< Next unconsumed token, stored here for peek operations.
         FileSpan _trivia;                                   ///< Span of leading trivia which will be attached to the next lexed token.
         TokenType _lastTokenType = TokenType::StartOfInput; ///< The last token type lexed.
 
     public:
         static const uint32_t SPACES_PER_INDENT = 4;
 
-        Lexer(const Console& console, FileContent* content);
+        Lexer(const Console& console, FileContent& content);
         Lexer(const Lexer&) = delete;
         Lexer(Lexer&&) = delete;
-        ~Lexer();
 
         TokenType PeekType();
 
-        Token* Peek();
+        Token& Peek();
 
-        Token* Advance();
+        UP<Token> Advance();
 
-        bool Consume(TokenType type, Token** out_token);
+        UP<Token> Consume(TokenType type);
 
     private:
-        Token* Lex();
+        UP<Token> Lex();
 
         void ConsumeTrivia();
 
-        Token* LexEndOfInput();
+        UP<Token> LexEndOfInput();
 
-        Token* LexIndentation();
+        UP<Token> LexIndentation();
 
-        Token* LexEndOfLine(char currentChar);
+        UP<Token> LexEndOfLine(char currentChar);
 
-        Token* LexWord();
+        UP<Token> LexWord();
 
-        Token* LexLineText();
+        UP<Token> LexLineText();
 
-        Token* LexQuotedText();
+        UP<Token> LexQuotedText();
 
-        Token* LexBlockText();
+        UP<Token> LexBlockText();
 
         /**
          * Parses an escape sequence starting at the backslash character.
@@ -71,7 +70,7 @@ namespace mot
          */
         bool ParseEscapeSequence(uint32_t position, char32_t& out_char, int& out_escapeLength);
 
-        MotString* GetQuotedLiteral(uint32_t openQuote, uint32_t closeQuote, uint32_t resultLength, bool hasEscapes);
+        MotString GetQuotedLiteral(uint32_t openQuote, uint32_t closeQuote, uint32_t resultLength, bool hasEscapes);
 
         /**
          * Denotes the start of a new line (does not update _position).
@@ -80,7 +79,8 @@ namespace mot
          */
         uint32_t StartNewLine(uint32_t lineStart);
 
-        Token* NewToken(TokenType type, uint32_t length, MotString* value = nullptr);
+        UP<Token> NewToken(TokenType type, uint32_t length);
+        UP<Token> NewToken(TokenType type, uint32_t length, MotString value);
     };
 }
 

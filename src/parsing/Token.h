@@ -82,15 +82,10 @@ namespace mot
         const TokenType _type;
         const FileSpan _trivia;
         const FileSpan _text;
-        MotString* _value;
+        MotString _value;
 
     public:
-        Token(TokenType type, FileSpan trivia, FileSpan text, MotString* value = nullptr);
-        Token(const Token&) = delete;
-        Token(Token&&) = delete;
-        ~Token();
-
-        bool IsToken() const final;
+        Token(TokenType type, FileSpan trivia, FileSpan text, MotString value);
 
         TokenType Type() const;
 
@@ -98,11 +93,11 @@ namespace mot
 
         const FileSpan& Text() const;
 
+        const MotString& Value() const;
+
+        SP<const char> Filename() const;
+
         void DebugPrint(std::ostream& os, bool positions, bool color) const;
-
-        const MotString* Value() const;
-
-        const char* Filename() const;
     };
 }
 

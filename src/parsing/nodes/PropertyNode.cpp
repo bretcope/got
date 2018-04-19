@@ -3,44 +3,36 @@
 
 namespace mot
 {
-    PropertyNode::PropertyNode(PropertyDeclarationNode* declaration, Token* endOfLine) :
-            _declaration(declaration),
-            _value(nullptr),
-            _endOfLine(endOfLine),
-            _block(nullptr)
+    PropertyNode::PropertyNode(UP<PropertyDeclarationNode>&& declaration, UP<Token>&& endOfLine) :
+            _declaration{std::move(declaration)},
+            _value{nullptr},
+            _endOfLine{std::move(endOfLine)},
+            _block{nullptr}
     {
-        assert(declaration != nullptr);
-        assert(endOfLine != nullptr && endOfLine->Type() == TokenType::EndOfLine);
+        assert(_declaration != nullptr);
+        assert(_endOfLine != nullptr && _endOfLine->Type() == TokenType::EndOfLine);
     }
 
-    PropertyNode::PropertyNode(PropertyDeclarationNode* declaration, PropertyValueNode* value, Token* endOfLine) :
-            _declaration(declaration),
-            _value(value),
-            _endOfLine(endOfLine),
-            _block(nullptr)
+    PropertyNode::PropertyNode(UP<PropertyDeclarationNode>&& declaration, UP<PropertyValueNode>&& value, UP<Token>&& endOfLine) :
+            _declaration{std::move(declaration)},
+            _value{std::move(value)},
+            _endOfLine{std::move(endOfLine)},
+            _block{nullptr}
     {
-        assert(declaration != nullptr);
-        assert(value != nullptr);
-        assert(endOfLine != nullptr && endOfLine->Type() == TokenType::EndOfLine);
+        assert(_declaration != nullptr);
+        assert(_value != nullptr);
+        assert(_endOfLine != nullptr && _endOfLine->Type() == TokenType::EndOfLine);
     }
 
-    PropertyNode::PropertyNode(PropertyDeclarationNode* declaration, Token* endOfLine, PropertyBlockNode* block) :
-            _declaration(declaration),
-            _value(nullptr),
-            _endOfLine(endOfLine),
-            _block(block)
+    PropertyNode::PropertyNode(UP<PropertyDeclarationNode>&& declaration, UP<Token>&& endOfLine, UP<PropertyBlockNode>&& block) :
+            _declaration{std::move(declaration)},
+            _value{nullptr},
+            _endOfLine{std::move(endOfLine)},
+            _block{std::move(block)}
     {
-        assert(declaration != nullptr);
-        assert(endOfLine != nullptr && endOfLine->Type() == TokenType::EndOfLine);
-        assert(block != nullptr);
-    }
-
-    PropertyNode::~PropertyNode()
-    {
-        delete _declaration;
-        delete _value;
-        delete _endOfLine;
-        delete _block;
+        assert(_declaration != nullptr);
+        assert(_endOfLine != nullptr && _endOfLine->Type() == TokenType::EndOfLine);
+        assert(_block != nullptr);
     }
 
     NodeType PropertyNode::Type() const
@@ -50,25 +42,20 @@ namespace mot
 
     void PropertyNode::GetSyntaxElements(std::vector<const SyntaxElement*>& list) const
     {
-        list.push_back(_declaration);
+        list.push_back(_declaration.get());
 
         if (_value != nullptr)
-            list.push_back(_value);
+            list.push_back(_value.get());
 
-        list.push_back(_endOfLine);
+        list.push_back(_endOfLine.get());
 
         if (_block != nullptr)
-            list.push_back(_block);
+            list.push_back(_block.get());
     }
 
-    const char* PropertyNode::Filename() const
+    const PropertyDeclarationNode& PropertyNode::Declaration() const
     {
-        return _endOfLine->Filename();
-    }
-
-    const PropertyDeclarationNode* PropertyNode::Declaration() const
-    {
-        return _declaration;
+        return *_declaration;
     }
 
     bool PropertyNode::HasValue() const
@@ -83,11 +70,11 @@ namespace mot
 
     const PropertyValueNode* PropertyNode::ValueNode() const
     {
-        return _value;
+        return _value.get();
     }
 
     const PropertyBlockNode* PropertyNode::Block() const
     {
-        return _block;
+        return _block.get();
     }
 }

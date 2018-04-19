@@ -15,15 +15,14 @@ namespace mot
     class Profile
     {
     private:
-        const MotString* _name = nullptr;
-        ByStringPtr<const Prefix> _prefixes;
-        ByStringPtr<const Repo> _repos;
+        MotString _name;
+        ByString<const Prefix> _prefixes;
+        ByString<const Repo> _repos;
         std::vector<UP<FileContent>> _content;
-        std::vector<FileNode*> _fileNodes;
+        std::vector<UP<FileNode>> _fileNodes;
 
     public:
         Profile();
-        ~Profile();
 
         bool Load(const Console& console, const char* filename, uint32_t maxFileSize);
     };

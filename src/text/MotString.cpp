@@ -1,114 +1,61 @@
 #include <cassert>
 #include <cstring>
 #include <algorithm>
+#include <memory>
 #include "MotString.h"
 
 namespace mot
 {
-    MotString::MotString(const char* data, uint32_t byteCount, bool transferOwnership) :
-            _data(data),
-            _byteCount(byteCount),
-            _isOwnerOfData(transferOwnership)
-    {
-        assert(byteCount == 0 || data != nullptr);
-    }
-
-    MotString::MotString(const char* str)
-    {
-        _data = str;
-        _byteCount = (uint32_t)strlen(str);
-        _isOwnerOfData = false;
-    }
-
-    MotString::MotString():
-        _data(nullptr),
-        _byteCount(0),
-        _isOwnerOfData(false)
+    MotString::Data::Data(SP<const char> sharedStr, const char* str, uint32_t byteLength):
+            m_sharedStr{sharedStr},
+            m_str{str},
+            m_byteLength{byteLength}
     {
     }
 
-    MotString::MotString(const MotString& other)
+    MotString::MotString(mot::SP<mot::MotString::Data> data):
+            m_data{data}
     {
-        auto data = other._data;
-        auto len = other._byteCount;
-        auto owner = other._isOwnerOfData;
-
-        if (owner && len > 0)
-        {
-            // need to make a copy of the data
-            auto newData = new char[len];
-            memcpy(newData, data, len);
-            data = newData;
-        }
-
-        _data = data;
-        _byteCount = len;
-        _hashCode = other._hashCode;
-        _charCount = other._charCount;
-        _isOwnerOfData = owner;
     }
 
-    MotString::MotString(MotString&& other) noexcept
+    MotString::MotString(SP<const char> sharedStr, uint32_t offset, uint32_t byteLength) :
+            m_data{std::make_shared<Data>(sharedStr, &sharedStr.get()[offset], byteLength)}
     {
-        _data = other._data;
-        _byteCount = other._byteCount;
-        _hashCode = other._hashCode;
-        _charCount = other._charCount;
-        _isOwnerOfData = other._isOwnerOfData;
-
-        other._data = nullptr;
     }
 
-    MotString::~MotString()
+    MotString::MotString(const char* literal):
+            m_data{std::make_shared<Data>(nullptr, literal, (uint32_t)strlen(literal))}
     {
-        if (_isOwnerOfData)
-            delete (char*)_data;
     }
 
-    MotString& MotString::operator=(MotString rhs) noexcept
-    {
-        swap(*this, rhs);
-        return *this;
-    }
+    MotString::MotString() = default;
 
     std::ostream& operator<<(std::ostream& os, const MotString& s)
     {
-        auto len = s._byteCount;
+        auto len = s.ByteLength();
         if (len > 0)
         {
-            os.write(s._data, len);
+            os.write(s.m_data->m_str, len);
         }
 
         return os;
     }
 
-    std::ostream& operator<<(std::ostream& os, const MotString* s)
-    {
-        return os << *s;
-    }
-
-    void swap(MotString& a, MotString& b) noexcept
-    {
-        using std::swap;
-        swap(a._data, b._data);
-        swap(a._byteCount, b._byteCount);
-        swap(a._hashCode, b._hashCode);
-        swap(a._charCount, b._charCount);
-        swap(a._isOwnerOfData, b._isOwnerOfData);
-    }
-
     uint32_t MotString::ByteLength() const
     {
-        return _byteCount;
+        return m_data == nullptr ? 0 : m_data->m_byteLength;
     }
 
     uint32_t MotString::CharacterCount() const
     {
-        auto count = _charCount;
-        if (count == 0 && _byteCount > 0 && _hashCode == 0)
+        if (m_data == nullptr)
+            return 0;
+
+        auto count = m_data->m_charCount;
+        if (count == 0 && m_data->m_byteLength > 0 && m_data->m_hashCode == 0)
         {
             CalculateHashAndCharacterCount();
-            count = _charCount;
+            count = m_data->m_charCount;
         }
 
         return count;
@@ -116,11 +63,14 @@ namespace mot
 
     uint32_t MotString::HashCode() const
     {
-        auto hash = _hashCode;
+        if (m_data == nullptr)
+            return 0;
+
+        auto hash = m_data->m_hashCode;
         if (hash == 0)
         {
             CalculateHashAndCharacterCount();
-            hash = _hashCode;
+            hash = m_data->m_hashCode;
         }
 
         return hash;
@@ -128,91 +78,73 @@ namespace mot
 
     Utf8::Iterator MotString::Iterator() const
     {
-        return Utf8::Iterator(_data, _byteCount);
+        return Utf8::Iterator(m_data == nullptr ? nullptr : m_data->m_str, ByteLength());
     }
 
-    void MotString::SubString(uint32_t start, uint32_t length, bool copyData, mot::MotString& out_subString) const
+    MotString MotString::SubString(uint32_t start, uint32_t length) const
     {
         auto origLen = ByteLength();
 
+        // todo: maybe these should throw exceptions for real
         assert(start <= origLen);
         assert(length <= origLen - start);
 
         length = start < origLen ? std::min(length, origLen - start) : 0;
 
         if (length == 0)
-        {
-            out_subString = MotString();
-            return;
-        }
+            return MotString();
 
-        const char* data;
-        if (copyData)
-        {
-            data = new char[length];
-            memcpy((char*)data, &_data[start], length);
-        }
-        else
-        {
-            data = &_data[start];
-        }
-
-        out_subString = MotString(data, length, copyData);
+        return MotString(std::make_shared<Data>(m_data->m_sharedStr, &m_data->m_str[start], length));
     }
 
-    int MotString::Compare(const MotString* a, const MotString* b)
+    int MotString::Compare(const MotString& a, const MotString& b)
     {
         return CompareImpl(a, b, true, true);
     }
 
-    int MotString::CompareCaseInsensitive(const MotString* a, const MotString* b)
+    int MotString::CompareCaseInsensitive(const MotString& a, const MotString& b)
     {
         return CompareImpl(a, b, false, true);
     }
 
-    bool MotString::AreEqual(const MotString* a, const MotString* b)
+    bool MotString::AreEqual(const MotString& a, const MotString& b)
     {
         return CompareImpl(a, b, true, false) == 0;
     }
 
-    bool MotString::AreCaseInsensitiveEqual(const MotString* a, const MotString* b)
+    bool MotString::AreCaseInsensitiveEqual(const MotString& a, const MotString& b)
     {
         return CompareImpl(a, b, false, false) == 0;
     }
 
-    bool MotString::IsEqualTo(const MotString* str) const
+    bool MotString::IsEqualTo(const MotString& str) const
     {
-        return AreEqual(this, str);
+        return AreEqual(*this, str);
     }
 
-    bool MotString::IsCaseInsensitiveEqualTo(const MotString* str) const
+    bool MotString::IsCaseInsensitiveEqualTo(const MotString& str) const
     {
-        return AreCaseInsensitiveEqual(this, str);
+        return AreCaseInsensitiveEqual(*this, str);
     }
 
-    const MotString* MotString::Empty()
+    bool MotString::IsEmpty(const MotString& s)
     {
-        static const MotString empty;
-        return &empty;
+        return &s == nullptr || s.ByteLength() == 0;
     }
 
-    bool MotString::IsEmpty(const MotString* s)
+    int MotString::CompareImpl(const MotString& a, const MotString& b, bool caseSensitive, bool orderedResult)
     {
-        return s == nullptr || s->ByteLength() == 0;
-    }
-
-    int MotString::CompareImpl(const MotString* a, const MotString* b, bool caseSensitive, bool orderedResult)
-    {
-        if (a == b)
+        if (&a == &b)
             return 0;
 
-        if (a == nullptr || b == nullptr)
-        {
-            return a == nullptr ? 1 : -1; // we're going to say that any value comes before null
-        }
+        if (&a == nullptr || &b == nullptr)
+            return &a == nullptr ? 1 : -1; // we're going to say that any value comes before null
 
-        auto aLen = a->_byteCount;
-        auto bLen = b->_byteCount;
+        if (a.m_data == b.m_data)
+            return 0;
+
+        auto aLen = a.ByteLength();
+        auto bLen = b.ByteLength();
 
         if (aLen == 0 || bLen == 0)
         {
@@ -225,20 +157,20 @@ namespace mot
         if (!orderedResult && aLen != bLen)
             return 1;
 
-        auto aData = a->_data;
-        auto bData = b->_data;
+        auto aStr = a.m_data->m_str;
+        auto bStr = b.m_data->m_str;
 
-        if (aData == bData)
+        if (aStr == bStr && aLen == bLen)
             return 0;
 
-        if (!orderedResult && a->HashCode() != b->HashCode())
+        if (!orderedResult && a.HashCode() != b.HashCode())
             return 1;
 
         auto commonLen = std::min(aLen, bLen);
 
         if (caseSensitive)
         {
-            auto compare = memcmp(aData, bData, commonLen);
+            auto compare = memcmp(aStr, bStr, commonLen);
             if (compare != 0)
                 return compare;
         }
@@ -248,14 +180,14 @@ namespace mot
             for (auto i = 0u; i < commonLen;)
             {
                 char32_t aCh, bCh;
-                auto aChLen = Utf8::Decode(aData, i, aLen, aCh);
-                auto bChLen = Utf8::Decode(bData, i, bLen, bCh);
+                auto aChLen = Utf8::Decode(aStr, i, aLen, aCh);
+                auto bChLen = Utf8::Decode(bStr, i, bLen, bCh);
 
                 if (aChLen == 0 || bChLen == 0)
                 {
                     // invalid UTF-8 sequence - we'll fallback to direct byte comparison
-                    if (aData[i] != bData[i])
-                        return (uint8_t)aData[i] < (uint8_t)bData[i] ? -1 : 1;
+                    if (aStr[i] != bStr[i])
+                        return (uint8_t)aStr[i] < (uint8_t)bStr[i] ? -1 : 1;
 
                     i++;
                     continue;
@@ -290,12 +222,12 @@ namespace mot
         const uint32_t FNV_OFFSET = 2166136261;
 
         auto hash = FNV_OFFSET;
-        auto length = _byteCount;
+        auto length = ByteLength();
         auto charCount = length;
-        auto data = _data;
+        auto str = m_data->m_str;
         for (auto i = 0u; i < length;)
         {
-            auto byte = (unsigned char)data[i];
+            auto byte = (unsigned char)str[i];
 
             if (byte < 0x80u) // fast path for ASCII
             {
@@ -307,7 +239,7 @@ namespace mot
 
             // slow path - we need to decode the unicode
             char32_t ch;
-            auto charLen = Utf8::Decode(data, i, length, ch);
+            auto charLen = Utf8::Decode(str, i, length, ch);
             assert(charLen != 1); // should have been handled by the single byte case above
             assert(charLen <= 4);
 
@@ -365,7 +297,7 @@ namespace mot
 
         assert(charCount <= length);
 
-        _hashCode = hash;
-        _charCount = charCount;
+        m_data->m_hashCode = hash;
+        m_data->m_charCount = charCount;
     }
 }

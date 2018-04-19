@@ -49,7 +49,7 @@ namespace mot
         }
 
         auto size = (uint32_t)endPos;
-        UP<char[]> data{new char[size]};
+        SP<char> data(new char[size], std::default_delete<char[]>());
         fs.seekg(0, std::ifstream::beg);
         fs.read(data.get(), size);
 
@@ -61,9 +61,9 @@ namespace mot
 
         // make a copy of the filename to be owned by FileContent
         // todo: we should perform some sort of resolution on the file before loading, and we could use that as an opportunity to make a copy of the name
-        UP<char[]> nameCopy{new char[nameLen + 1]};
+        SP<char> nameCopy(new char[nameLen + 1], std::default_delete<char[]>());
         memcpy(nameCopy.get(), filename, nameLen + 1);
 
-        return UP<FileContent>{new FileContent(nameCopy.release(), data.release(), size)};
+        return UP<FileContent>{new FileContent(std::move(nameCopy), std::move(data), size)};
     }
 }

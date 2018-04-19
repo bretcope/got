@@ -4,18 +4,18 @@
 
 #include <cstdint>
 #include <memory>
+#include <vector>
+#include "../Common.h"
 
 namespace mot
 {
     class FileContent
     {
     private:
-        char* _filename;
-        char* _data;
+        SP<char> _filename;
+        SP<char> _data;
         uint32_t _size;
-        uint32_t* _lineStarts = nullptr;
-        uint32_t _lineCount = 0;
-        uint32_t _lineCapacity = 0;
+        std::vector<uint32_t> _lineStarts;
 
     public:
         /**
@@ -24,14 +24,11 @@ namespace mot
          * @param data Raw binary data which represents the file's content.
          * @param size The size of data (in bytes).
          */
-        FileContent(char* filename, char* data, uint32_t size);
-        FileContent(const FileContent&) = delete;
-        FileContent(FileContent&&) = delete;
-        ~FileContent();
+        FileContent(SP<char> filename, SP<char> data, uint32_t size);
 
-        const char* Filename() const;
+        SP<const char> Filename() const;
 
-        const char* Data() const;
+        SP<const char> Data() const;
 
         uint32_t Size() const;
 

@@ -5,67 +5,81 @@
 
 namespace mot
 {
-    FileIR::FileIR(const Console& console, const FileNode* fileNode, bool expectResource)
+    PrefixIR::PrefixIR(const PropertyNode& node, MotString name):
+            Node{node},
+            Name{std::move(name)}
     {
-        _fileNode = fileNode;
-        _isValid = TryBuildIR(console, fileNode, expectResource);
     }
 
-    FileIR::~FileIR() = default;
+    PrefixIR::PrefixIR(mot::PrefixIR&& other) noexcept:
+            Node{other.Node},
+            Name{other.Name},
+            PathByEnvironment{std::move(other.PathByEnvironment)},
+            OverrideMode{other.OverrideMode}
+
+    {
+    }
+
+    FileIR::FileIR(const Console& console, const FileNode& fileNode, bool expectResource):
+            _console{console},
+            _fileNode{fileNode}
+    {
+        _isValid = TryBuildIR(fileNode, expectResource);
+    }
 
     bool FileIR::IsValid() const
     {
         return _isValid;
     }
 
-    const ByStringPtr<PrefixIR>& FileIR::Prefixes() const
+    const ByString<UP<PrefixIR>>& FileIR::Prefixes() const
     {
         return _prefixes;
     }
 
-    bool FileIR::TryBuildIR(const Console& console, const FileNode* fileNode, bool expectResource)
+    bool FileIR::TryBuildIR(const FileNode& fileNode, bool expectResource)
     {
-        assert(fileNode != nullptr);
+        assert(&fileNode != nullptr);
 
-        auto propList = fileNode->PropertyList();
-        auto propCount = propList->Count();
+        const auto& propList = fileNode.PropertyList();
+        const auto count = propList.Count();
 
-        if (propCount < 1)
+        if (count < 1)
             return false;
 
-        if (!AddHeader(console, propList->GetProperty(0), expectResource))
+        if (!AddHeader(propList.Property(0), expectResource))
             return false;
 
-        for (auto i = 1; i < propCount; i++)
+        for (auto i = 0; i < count; i++)
         {
-            auto prop = propList->GetProperty(i);
-            auto propType = prop->Declaration()->PropertyType();
+            const auto& prop = propList.Property(i);
+            auto propType = prop.Declaration().PropertyType();
 
             // ordered roughly by expected popularity of each property type
             if (Constants::REPO.IsCaseInsensitiveEqualTo(propType))
             {
-                if (!AddRepo(console, prop))
+                if (!AddRepo(prop))
                     return false;
             }
             else if (Constants::PREFIX.IsCaseInsensitiveEqualTo(propType))
             {
-                if (!AddPrefix(console, prop))
+                if (!AddPrefix(prop))
                     return false;
             }
             else if (Constants::INCLUDE.IsCaseInsensitiveEqualTo(propType))
             {
-                if (!AddInclude(console, prop))
+                if (!AddInclude(prop))
                     return false;
             }
             else if (Constants::ALIAS.IsCaseInsensitiveEqualTo(propType))
             {
-                if (!AddAlias(console, prop))
+                if (!AddAlias(prop))
                     return false;
             }
             else
             {
-                console.Error() << "Error: Unknown property \"" << propType << "\" in configuration file.\n";
-                console.Error() << FmtPosition(prop);
+                _console.Error() << "Error: Unknown property \"" << propType << "\" in configuration file.\n";
+                _console.Error() << FmtPosition(prop);
                 return false;
             }
         }
@@ -73,193 +87,191 @@ namespace mot
         return true;
     }
 
-    bool FileIR::AddHeader(const Console& console, const PropertyNode* firstNode, bool expectResource)
+    bool FileIR::AddHeader(const PropertyNode& firstNode, bool expectResource)
     {
-        auto propType = firstNode->Declaration()->PropertyType();
+        auto propType = firstNode.Declaration().PropertyType();
 
         if (expectResource)
         {
             if (Constants::RESOURCE.IsCaseInsensitiveEqualTo(propType))
             {
-                _headerNode = firstNode;
+                _headerNode = &firstNode;
                 _isProfile = false;
                 return true;
             }
 
-            console.Error() << "Error: Resource (included) files must be declared with the \"RESOURCE\" property at the beginning of the file.\n";
-            console.Error() << FmtPosition(firstNode);
+            _console.Error() << "Error: Resource (included) files must be declared with the \"RESOURCE\" property at the beginning of the file.\n";
+            _console.Error() << FmtPosition(firstNode);
             return false;
         }
 
         if (!Constants::PROFILE.IsCaseInsensitiveEqualTo(propType))
         {
-            console.Error() << "Error: MOT profiles must be declared with the \"PROFILE\" property at the beginning of the file.\n";
-            console.Error() << FmtPosition(firstNode);
+            _console.Error() << "Error: MOT profiles must be declared with the \"PROFILE\" property at the beginning of the file.\n";
+            _console.Error() << FmtPosition(firstNode);
             return false;
         }
 
-        _headerNode = firstNode;
+        _headerNode = &firstNode;
         _isProfile = true;
         return true;
     }
 
-    bool FileIR::AddAlias(const Console& console, const PropertyNode* prop)
+    bool FileIR::AddAlias(const PropertyNode& prop)
     {
-        assert(Constants::ALIAS.IsCaseInsensitiveEqualTo(prop->Declaration()->PropertyType()));
+        assert(Constants::ALIAS.IsCaseInsensitiveEqualTo(prop.Declaration().PropertyType()));
 
         //
 
         return true;
     }
 
-    bool FileIR::AddInclude(const Console& console, const PropertyNode* prop)
+    bool FileIR::AddInclude(const PropertyNode& prop)
     {
-        assert(Constants::INCLUDE.IsCaseInsensitiveEqualTo(prop->Declaration()->PropertyType()));
+        assert(Constants::INCLUDE.IsCaseInsensitiveEqualTo(prop.Declaration().PropertyType()));
 
         //
 
         return true;
     }
 
-    bool FileIR::AddPrefix(const Console& console, const PropertyNode* prop)
+    bool FileIR::AddPrefix(const PropertyNode& prop)
     {
-        assert(Constants::PREFIX.IsCaseInsensitiveEqualTo(prop->Declaration()->PropertyType()));
+        assert(Constants::PREFIX.IsCaseInsensitiveEqualTo(prop.Declaration().PropertyType()));
 
-        auto prefixName = prop->Declaration()->PropertyName();
+        auto prefixName = prop.Declaration().PropertyName();
         if (MotString::IsEmpty(prefixName))
         {
-            console.Error() << "Error: Prefix property does not have a name\n";
-            console.Error() << FmtPosition(prop);
+            _console.Error() << "Error: Prefix property does not have a name\n";
+            _console.Error() << FmtPosition(prop);
             return false;
         }
 
         if (_prefixes.count(prefixName) > 0)
         {
-            console.Error() << "Error: Prefix \"" << prefixName << "\" already exists (note: prefixes are case-insensitive).\n";
-            console.Error() << "    original: " << FmtPosition(_prefixes.at(prefixName).node).NoAtPrefix();
-            console.Error() << "    duplicate: " << FmtPosition(prop).NoAtPrefix();
+            _console.Error() << "Error: Prefix \"" << prefixName << "\" already exists (note: prefixes are case-insensitive).\n";
+            _console.Error() << "    original: " << FmtPosition(_prefixes.at(prefixName)->Node).NoAtPrefix();
+            _console.Error() << "    duplicate: " << FmtPosition(prop).NoAtPrefix();
             return false;
         }
 
-        PrefixIR ir{};
-        ir.node = prop;
-        ir.name = prefixName;
-        ir.overrideMode = OverrideMode::None;
+        auto ir = std::make_unique<PrefixIR>(PrefixIR(prop, prefixName));
+        ir->OverrideMode = OverrideMode::None;
 
-        if (prop->HasValue())
+        if (auto valueNode = prop.ValueNode())
         {
-            auto value = prop->ValueNode()->Value();
+            auto value = valueNode->Value();
             if (MotString::IsEmpty(value))
             {
-                console.Error() << "Error: Prefix \"" << prefixName << "\" has an empty value\n";
-                console.Error() << FmtPosition(prop);
+                _console.Error() << "Error: Prefix \"" << prefixName << "\" has an empty value\n";
+                _console.Error() << FmtPosition(prop);
                 return false;
             }
 
-            ir.pathByEnvironment[&Constants::DEFAULT] = value;
+            ir->PathByEnvironment[Constants::DEFAULT] = value;
         }
-        else if (prop->HasBlock())
+        else if (auto block = prop.Block())
         {
             auto foundOverrideProp = false;
 
-            auto childProps = prop->Block()->PropertyList();
-            auto childCount = childProps->Count();
-            for (auto i = 0; i < childCount; i++)
+            auto& propList = block->PropertyList();
+            auto childCount = propList.Count();
+            for (auto i = 0u; i < childCount; i++)
             {
-                auto childProp = childProps->GetProperty(i);
-                auto childPropType = childProp->Declaration()->PropertyType();
+                auto& childProp = propList.Property(i);
+                auto childPropType = childProp.Declaration().PropertyType();
 
                 if (Constants::ENV.IsCaseInsensitiveEqualTo(childPropType))
                 {
-                    auto envName = childProp->Declaration()->PropertyName();
+                    auto envName = childProp.Declaration().PropertyName();
                     if (MotString::IsEmpty(envName))
                     {
-                        console.Error() << "Error: Environment name is empty in prefix \"" << prefixName << "\"\n";
-                        console.Error() << FmtPosition(childProp);
+                        _console.Error() << "Error: Environment name is empty in prefix \"" << prefixName << "\"\n";
+                        _console.Error() << FmtPosition(childProp);
                         return false;
                     }
 
-                    if (ir.pathByEnvironment.count(envName) > 0)
+                    if (ir->PathByEnvironment.count(envName) > 0)
                     {
-                        console.Error() << "Error: Duplicate environment \"" << envName << "\" in prefix \"" << prefixName << "\"\n";
-                        console.Error() << FmtPosition(childProp);
+                        _console.Error() << "Error: Duplicate environment \"" << envName << "\" in prefix \"" << prefixName << "\"\n";
+                        _console.Error() << FmtPosition(childProp);
                         return false;
                     }
 
-                    auto envPath = childProp->HasValue() ? childProp->ValueNode()->Value() : nullptr;
+                    auto envPath = childProp.HasValue() ? childProp.ValueNode()->Value() : MotString();
                     if (MotString::IsEmpty(envPath))
                     {
-                        console.Error() << "Error: Environment \"" << envName << "\" has no value in prefix \"" << prefixName << "\"\n";
-                        console.Error() << FmtPosition(childProp);
+                        _console.Error() << "Error: Environment \"" << envName << "\" has no value in prefix \"" << prefixName << "\"\n";
+                        _console.Error() << FmtPosition(childProp);
                         return false;
                     }
 
                     // todo: if value has invalid characters
 
                     // Everything looks good so far. The path itself might still be invalid, but we can't test that until we resolve the prefixes.
-                    ir.pathByEnvironment[envName] = envPath;
+                    ir->PathByEnvironment[envName] = envPath;
                 }
                 else if (Constants::OVERRIDE.IsCaseInsensitiveEqualTo(childPropType))
                 {
                     if (foundOverrideProp)
                     {
-                        console.Error() << "Error: Prefix \"" << prefixName << "\" has more than one override property\n";
-                        console.Error() << FmtPosition(childProp);
+                        _console.Error() << "Error: Prefix \"" << prefixName << "\" has more than one override property\n";
+                        _console.Error() << FmtPosition(childProp);
                         return false;
                     }
 
                     foundOverrideProp = true;
 
-                    if (!MotString::IsEmpty(childProp->Declaration()->PropertyName()))
+                    if (!MotString::IsEmpty(childProp.Declaration().PropertyName()))
                     {
-                        console.Error() << R"(Error: Expected a colon (:) after "override" in prefix ")" << prefixName << "\"\n";
-                        console.Error() << FmtPosition(childProp);
+                        _console.Error() << R"(Error: Expected a colon (:) after "override" in prefix ")" << prefixName << "\"\n";
+                        _console.Error() << FmtPosition(childProp);
                         return false;
                     }
 
-                    auto overrideValue = childProp->HasValue() ? childProp->ValueNode()->Value() : MotString::Empty();
+                    auto overrideValue = childProp.HasValue() ? childProp.ValueNode()->Value() : MotString();
                     if (Constants::MERGE.IsCaseInsensitiveEqualTo(overrideValue))
                     {
-                        ir.overrideMode = OverrideMode::Merge;
+                        ir->OverrideMode = OverrideMode::Merge;
                     }
                     else if (Constants::REPLACE.IsCaseInsensitiveEqualTo(overrideValue))
                     {
-                        ir.overrideMode = OverrideMode::Replace;
+                        ir->OverrideMode = OverrideMode::Replace;
                     }
                     else if (Constants::NONE.IsCaseInsensitiveEqualTo(overrideValue))
                     {
-                        ir.overrideMode = OverrideMode::None; // technical redundant, but eh
+                        ir->OverrideMode = OverrideMode::None; // technical redundant, but eh
                     }
                     else
                     {
-                        console.Error() << "Error: Override property must be \"merge\", \"replace\", or \"none\"\n";
-                        console.Error() << FmtPosition(childProp);
+                        _console.Error() << "Error: Override property must be \"merge\", \"replace\", or \"none\"\n";
+                        _console.Error() << FmtPosition(childProp);
                         return false;
                     }
                 }
                 else
                 {
-                    console.Error() << "Error: Unknown property type \"" << childPropType << "\" in prefix \"" << prefixName << "\"\n";
-                    console.Error() << FmtPosition(childProp);
+                    _console.Error() << "Error: Unknown property type \"" << childPropType << "\" in prefix \"" << prefixName << "\"\n";
+                    _console.Error() << FmtPosition(childProp);
                     return false;
                 }
             }
         }
         else
         {
-            console.Error() << "Error: Prefix \"" << prefixName << "\" does not define paths for any environment\n";
-            console.Error() << FmtPosition(prop);
+            _console.Error() << "Error: Prefix \"" << prefixName << "\" does not define paths for any environment\n";
+            _console.Error() << FmtPosition(prop);
             return false;
         }
 
-        _prefixes[prefixName] = std::move(ir);
+        _prefixes.emplace(prefixName, std::move(ir));
 
         return true;
     }
 
-    bool FileIR::AddRepo(const Console& console, const PropertyNode* prop)
+    bool FileIR::AddRepo(const PropertyNode& prop)
     {
-        assert(Constants::REPO.IsCaseInsensitiveEqualTo(prop->Declaration()->PropertyType()));
+        assert(Constants::REPO.IsCaseInsensitiveEqualTo(prop.Declaration().PropertyType()));
 
         //
 

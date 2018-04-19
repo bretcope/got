@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <locale>
+#include <algorithm>
 #include "io/FileReader.h"
 #include "parsing/Lexer.h"
 #include "parsing/Parser.h"
@@ -9,52 +10,54 @@
 
 using namespace mot;
 
-void DebugLexer(const Console& console, FileContent* content)
+void DebugLexer(const Console& console, FileContent& content)
 {
     Lexer lexer(console, content);
 
     while (auto token = lexer.Advance())
     {
         token->DebugPrint(console.Out(), true, true);
-        delete token;
     }
 }
 
-void DebugParser(const Console& console, FileContent* content)
+void DebugParser(const Console& console, FileContent& content)
 {
-    FileNode* tree;
-    if (ParseConfigurationFile(console, content, &tree))
+    if (auto tree = ParseConfigurationFile(console, content))
     {
-        auto callback = [&console] (const Node* node, int level) -> void
+        auto callback = [&console] (const Node& node, int level) -> void
         {
             for (auto i = 0; i < level; i++)
             {
                 console.Out() << "  ";
             }
 
-            console.Out() << node->Type() << '\n';
+            console.Out() << node.Type() << '\n';
         };
 
         tree->VisitNodes(callback);
-        delete tree;
     }
 }
 
-void DebugIR(const Console& console, FileContent* content)
+void DebugIR(const Console& console, FileContent& content)
 {
-    FileNode* tree;
-    if (ParseConfigurationFile(console, content, &tree))
+    if (auto tree = ParseConfigurationFile(console, content))
     {
-        FileIR ir(console, tree, false);
+        FileIR ir(console, *tree, false);
 
         if (ir.IsValid())
         {
             auto prefixes = ir.Prefixes();
             console.Out() << "Found " << prefixes.size() << " prefixes.\n";
-            for (auto kvp : prefixes)
+
+            std::for_each(prefixes.cbegin(), prefixes.cend(), [&console](const auto& pair)
             {
-                console.Out() << "prefix: " << kvp.first << "\n";
-            }
+                console.Out() << "loop";
+            });
+
+//            for (const std::pair<MotString, PrefixIR>& pair : prefixes)
+//            {
+//                console.Out() << "prefix: " ;//<< pair.first << "\n";
+//            }
         }
     }
 }
@@ -107,7 +110,7 @@ int main(int argc, char** argv)
 //        std::cout.write(content, size);
 //        DebugLexer(content);
 //        DebugParser(console, content);
-    DebugIR(console, content.get());
+    DebugIR(console, *content);
 
     // execute command https://stackoverflow.com/questions/478898/how-to-execute-a-command-and-get-output-of-command-within-c-using-posix
 

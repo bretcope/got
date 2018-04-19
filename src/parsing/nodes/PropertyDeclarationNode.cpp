@@ -3,25 +3,19 @@
 
 namespace mot
 {
-    PropertyDeclarationNode::PropertyDeclarationNode(Token* type) :
-            _type(type),
-            _name(nullptr)
+    PropertyDeclarationNode::PropertyDeclarationNode(UP<Token>&& type) :
+            _type{std::move(type)},
+            _name{nullptr}
     {
-        assert(type != nullptr && type->Type() == TokenType::Word);
+        assert(_type != nullptr && _type->Type() == TokenType::Word);
     }
 
-    PropertyDeclarationNode::PropertyDeclarationNode(Token* type, Token* name) :
-            _type(type),
-            _name(name)
+    PropertyDeclarationNode::PropertyDeclarationNode(UP<Token>&& type, UP<Token>&& name) :
+            _type{std::move(type)},
+            _name{std::move(name)}
     {
-        assert(type != nullptr && type->Type() == TokenType::Word);
-        assert(name != nullptr && (name->Type() == TokenType::Word || name->Type() == TokenType::QuotedText));
-    }
-
-    PropertyDeclarationNode::~PropertyDeclarationNode()
-    {
-        delete _type;
-        delete _name;
+        assert(_type != nullptr && _type->Type() == TokenType::Word);
+        assert(_name != nullptr && (_name->Type() == TokenType::Word || _name->Type() == TokenType::QuotedText));
     }
 
     NodeType PropertyDeclarationNode::Type() const
@@ -31,24 +25,19 @@ namespace mot
 
     void PropertyDeclarationNode::GetSyntaxElements(std::vector<const SyntaxElement*>& list) const
     {
-        list.push_back(_type);
+        list.push_back(_type.get());
 
         if (_name != nullptr)
-            list.push_back(_name);
+            list.push_back(_name.get());
     }
 
-    const char* PropertyDeclarationNode::Filename() const
-    {
-        return _type->Filename();
-    }
-
-    const MotString* PropertyDeclarationNode::PropertyType() const
+    MotString PropertyDeclarationNode::PropertyType() const
     {
         return _type->Value();
     }
 
-    const MotString* PropertyDeclarationNode::PropertyName() const
+    MotString PropertyDeclarationNode::PropertyName() const
     {
-        return _name == nullptr ? MotString::Empty() : _name->Value();
+        return _name == nullptr ? MotString() : _name->Value();
     }
 }

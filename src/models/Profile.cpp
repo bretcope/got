@@ -8,14 +8,6 @@ namespace mot
 {
     Profile::Profile() = default;
 
-    Profile::~Profile()
-    {
-        for (auto it = _fileNodes.begin(); it != _fileNodes.end(); ++it)
-        {
-            delete *it;
-        }
-    }
-
     bool Profile::Load(const Console& console, const char* filename, uint32_t maxFileSize)
     {
         FileContent* contentPtr;
@@ -29,13 +21,18 @@ namespace mot
             _content.push_back(std::move(profileContent));
         }
 
-        FileNode* profileNode;
-        if (!ParseConfigurationFile(console, contentPtr, &profileNode))
-            return false;
+        FileNode* profileNodePtr;
 
-        _fileNodes.push_back(profileNode);
+        {
+            auto profileNode = ParseConfigurationFile(console, *contentPtr);
+            if (profileNode == nullptr)
+                return false;
 
-        FileIR profileFileIR(console, profileNode, false);
+            profileNodePtr = profileNode.get();
+            _fileNodes.push_back(std::move(profileNode));
+        }
+
+        FileIR profileFileIR(console, *profileNodePtr, false);
         if (!profileFileIR.IsValid())
             return false;
 

@@ -8,63 +8,44 @@
 
 namespace mot
 {
-    Lexer::Lexer(const Console& console, FileContent* content) :
+    Lexer::Lexer(const Console& console, FileContent& content) :
             _console(console),
             _content(content),
-            _input(content->Data()),
-            _size(content->Size()),
+            _input(content.Data().get()),
+            _size(content.Size()),
             _trivia(content, 0, 0)
     {
-        _content->ResetLineMarkers();
+        _content.ResetLineMarkers();
         StartNewLine(0);
-    }
-
-    Lexer::~Lexer()
-    {
-        delete _nextToken;
     }
 
     TokenType Lexer::PeekType()
     {
-        auto token = Peek();
-        return token == nullptr ? TokenType::Error : token->Type();
+        return Peek().Type();
     }
 
-    Token* Lexer::Peek()
+    Token& Lexer::Peek()
     {
-        auto next = _nextToken;
-        if (next == nullptr)
-        {
-            next = Lex();
-            _nextToken = next;
-        }
+        if (_nextToken == nullptr)
+            _nextToken = Lex();
 
-        return next;
+        return *_nextToken.get();
     }
 
-    Token* Lexer::Advance()
+    UP<Token> Lexer::Advance()
     {
-        auto next = _nextToken;
-        if (next == nullptr)
-        {
+        if (_nextToken == nullptr)
             return Lex();
-        }
 
-        _nextToken = nullptr;
-        return next;
+        return std::move(_nextToken);
     }
 
-    bool Lexer::Consume(TokenType type, Token** out_token)
+    UP<Token> Lexer::Consume(TokenType type)
     {
-        auto token = Peek();
-        if (token != nullptr && token->Type() == type)
-        {
-            *out_token = Advance();
-            return true;
-        }
+        if (Peek().Type() == type)
+            return Advance();
 
-        *out_token = nullptr;
-        return false;
+        return nullptr;
     }
 
     static inline bool IsAlpha(char ch)
@@ -82,12 +63,16 @@ namespace mot
         return ch == '\r' || ch == '\n';
     }
 
-    Token* Lexer::Lex()
+    UP<Token> Lexer::Lex()
     {
         auto lastTokenType = _lastTokenType;
 
         if (lastTokenType == TokenType::EndOfInput)
-            return nullptr;
+        {
+            _console.Error() << "Error: Parser scanned past the end of input\n";
+            _console.Error() << FmtPosition(_content, _position).NoColumn().NoLine();
+            return NewToken(TokenType::Error, 0);
+        }
 
         ConsumeTrivia();
 
@@ -205,7 +190,7 @@ namespace mot
         _position = pos;
     }
 
-    Token* Lexer::LexEndOfInput()
+    UP<Token> Lexer::LexEndOfInput()
     {
         assert(_position == _size);
 
@@ -227,7 +212,7 @@ namespace mot
         return NewToken(TokenType::EndOfLine, 0);
     }
 
-    Token* Lexer::LexIndentation()
+    UP<Token> Lexer::LexIndentation()
     {
         assert(_lineSpaces != _indentLevel * Lexer::SPACES_PER_INDENT);
 
@@ -252,7 +237,7 @@ namespace mot
         return NewToken(TokenType::Error, 0);
     }
 
-    Token* Lexer::LexEndOfLine(char currentChar)
+    UP<Token> Lexer::LexEndOfLine(char currentChar)
     {
         assert(IsNewLine(currentChar));
         assert(currentChar == _input[_position]);
@@ -270,7 +255,7 @@ namespace mot
         return token;
     }
 
-    Token* Lexer::LexWord()
+    UP<Token> Lexer::LexWord()
     {
         assert(IsAlpha(_input[_position]));
 
@@ -290,11 +275,10 @@ namespace mot
         }
 
         auto length = pos - start;
-        auto value = new MotString(&input[start], length, false);
-        return NewToken(TokenType::Word, length, value);
+        return NewToken(TokenType::Word, length, MotString(_content.Data(), start, length));
     }
 
-    Token* Lexer::LexLineText()
+    UP<Token> Lexer::LexLineText()
     {
         auto start = _position;
         auto pos = start + 1;
@@ -316,11 +300,10 @@ namespace mot
         }
 
         auto length = lastNonWhitespace + 1 - start;
-        auto value = new MotString(&input[start], length, false);
-        return NewToken(TokenType::LineText, length, value);
+        return NewToken(TokenType::LineText, length, MotString(_content.Data(), start, length));
     }
 
-    Token* Lexer::LexQuotedText()
+    UP<Token> Lexer::LexQuotedText()
     {
         assert(_input[_position] == '"');
 
@@ -363,7 +346,7 @@ namespace mot
             else
             {
                 uint32_t lineNumber, lineStart;
-                _content->PositionDetails(start, &lineNumber, &lineStart, nullptr);
+                _content.PositionDetails(start, &lineNumber, &lineStart, nullptr);
                 _console.Error() << "Error: Unsupported escape sequence in quoted text\n";
                 _console.Error() << FmtPosition(_content, pos);
                 return NewToken(TokenType::Error, pos - start);
@@ -375,51 +358,50 @@ namespace mot
         return NewToken(TokenType::Error, pos - start);
     }
 
-    MotString* Lexer::GetQuotedLiteral(uint32_t openQuote, uint32_t closeQuote, uint32_t resultLength, bool hasEscapes)
+    MotString Lexer::GetQuotedLiteral(uint32_t openQuote, uint32_t closeQuote, uint32_t resultLength, bool hasEscapes)
     {
         assert(closeQuote > openQuote);
 
         if (closeQuote - openQuote == 1)
-            new MotString(nullptr, 0, false);
+            return MotString();
 
-        auto result = new char[resultLength];
+        if (!hasEscapes)
+        {
+            // no escapes sequences, so the resulting string is simply a literal substring on the original content
+            return MotString(_content.Data(), openQuote + 1, closeQuote - openQuote - 1);
+        }
+
+        SP<char> result(new char[resultLength], std::default_delete<char[]>());
+        auto resultPtr = result.get();
         auto input = _input;
 
-        if (hasEscapes)
+        // the slow path... we need to loop through looking for escape sequences again
+        auto ii = openQuote + 1; // start copying after the first double quote
+        auto ri = 0u;
+        while (ii < closeQuote)
         {
-            // the slow path... we need to loop through looking for escape sequences again
-            auto ii = openQuote + 1; // start copying after the first double quote
-            auto ri = 0u;
-            while (ii < closeQuote)
+            assert(ri < (int)resultLength);
+
+            if (input[ii] != '\\')
             {
-                assert(ri < (int)resultLength);
-
-                if (input[ii] != '\\')
-                {
-                    result[ri] = input[ii];
-                    ii++;
-                    ri++;
-                }
-                else
-                {
-                    char32_t escapeResult;
-                    int consumed;
-                    ParseEscapeSequence(ii, escapeResult, consumed);
-                    ii += consumed;
-                    ri += Utf8::Encode(escapeResult, &result[ri]);
-                }
+                resultPtr[ri] = input[ii];
+                ii++;
+                ri++;
             }
-
-            assert (ii == closeQuote);
-            assert (ri == resultLength);
+            else
+            {
+                char32_t escapeResult;
+                int consumed;
+                ParseEscapeSequence(ii, escapeResult, consumed);
+                ii += consumed;
+                ri += Utf8::Encode(escapeResult, &resultPtr[ri]);
+            }
         }
-        else
-        {
-            // no escape sequences, so we can just copy the memory
-            memcpy(result, &input[openQuote + 1], closeQuote - openQuote - 1);
-        }
 
-        return new MotString(result, resultLength, true);
+        assert (ii == closeQuote);
+        assert (ri == resultLength);
+
+        return MotString(result, 0, resultLength);
     }
 
     bool Lexer::ParseEscapeSequence(uint32_t position, char32_t& out_char, int& out_escapeLength)
@@ -481,14 +463,14 @@ namespace mot
                     auto ch = input[i];
                     if (ch >= '0' && ch <= '9')
                     {
-                        value = (value << 4) | (ch - 0x30u);
+                        value = (value << 4u) | (ch - 0x30u);
                         continue;
                     }
 
                     ch &= ~0x20u; // to uppercase
                     if (ch >= 'A' && ch <= 'F')
                     {
-                        value = (value << 4) | (ch - 'A' + 10);
+                        value = (value << 4u) | (ch - 'A' + 10u);
                         continue;
                     }
 
@@ -504,7 +486,7 @@ namespace mot
         return false;
     }
 
-    Token* Lexer::LexBlockText()
+    UP<Token> Lexer::LexBlockText()
     {
         assert(_position == _size || _input[_position] == '\r' || _input[_position] == '\n');
 
@@ -575,15 +557,12 @@ namespace mot
             end = pos;
         }
 
-        MotString* value;
-        if (valueLength == 0)
-        {
-            value = new MotString(nullptr, 0, false);
-        }
-        else
+        MotString value;
+        if (valueLength > 0)
         {
             auto vi = 0u;
-            auto valueStr = new char[valueLength];
+            SP<char> valueStr(new char[valueLength], std::default_delete<char[]>());
+            auto valueStrPtr = valueStr.get();
 
             for (auto it = copyRanges.begin(); it != copyRanges.end(); ++it)
             {
@@ -591,14 +570,14 @@ namespace mot
                 auto length = it->end - rs;
                 if (length > 0)
                 {
-                    memcpy(&valueStr[vi], &input[rs], length);
+                    memcpy(&valueStrPtr[vi], &input[rs], length);
                 }
 
                 vi += length;
             }
 
             assert(vi == valueLength);
-            value = new MotString(valueStr, valueLength, true);
+            value = MotString(valueStr, 0, valueLength);
         }
 
         return NewToken(TokenType::BlockText, end - start, value);
@@ -606,7 +585,7 @@ namespace mot
 
     uint32_t Lexer::StartNewLine(uint32_t lineStart)
     {
-        _content->MarkLine(lineStart);
+        _content.MarkLine(lineStart);
 
         auto pos = lineStart;
         auto size = _size;
@@ -624,13 +603,17 @@ namespace mot
         return spaces;
     }
 
-    Token* Lexer::NewToken(TokenType type, uint32_t length, MotString* value)
+    UP<Token> Lexer::NewToken(TokenType type, uint32_t length)
+    {
+        return NewToken(type, length, MotString());
+    }
+
+    UP<Token> Lexer::NewToken(TokenType type, uint32_t length, MotString value)
     {
         _lastTokenType = type;
         auto start = _position;
         auto end = start + length;
         _position = end;
-        auto token = new Token(type, _trivia, FileSpan(_content, start, end), value);
-        return token;
+        return UP<Token>(new Token(type, _trivia, FileSpan(_content, start, end), value));
     }
 }

@@ -6,26 +6,19 @@
 
 namespace mot
 {
-    FileContent::FileContent(char* filename, char* data, uint32_t size) :
-            _filename(filename),
-            _data(data),
+    FileContent::FileContent(SP<char> filename, SP<char> data, uint32_t size) :
+            _filename{filename},
+            _data{data},
             _size(size)
     {
     }
 
-    FileContent::~FileContent()
-    {
-        delete _filename;
-        delete _data;
-        delete _lineStarts;
-    }
-
-    const char* FileContent::Filename() const
+    SP<const char> FileContent::Filename() const
     {
         return _filename;
     }
 
-    const char* FileContent::Data() const
+    SP<const char> FileContent::Data() const
     {
         return _data;
     }
@@ -37,14 +30,14 @@ namespace mot
 
     uint32_t FileContent::LineCount() const
     {
-        return _lineCount;
+        return (uint32_t)_lineStarts.size();
     }
 
     void FileContent::PositionDetails(uint32_t position, uint32_t* out_lineNumber, uint32_t* out_lineStart, uint32_t* out_column) const
     {
         assert(out_lineNumber != nullptr || out_lineStart != nullptr || out_column != nullptr); // doesn't make sense to call this method if everything is null
 
-        auto count = _lineCount;
+        auto count = LineCount();
         if (count == 0)
         {
             if (out_lineNumber != nullptr)
@@ -109,13 +102,13 @@ namespace mot
         {
             // find character offset within line
             auto length = std::min(position, _size) - lineStart;
-            *out_column = length == 0 ? 0 : Utf8::CountCharacters(&_data[lineStart], length);
+            *out_column = length == 0 ? 0 : Utf8::CountCharacters(&_data.get()[lineStart], length);
         }
     }
 
     uint32_t FileContent::LineStartPosition(uint32_t lineNumber) const
     {
-        if (lineNumber < _lineCount)
+        if (lineNumber < LineCount())
             return _lineStarts[lineNumber];
 
         return _size;
@@ -123,38 +116,15 @@ namespace mot
 
     void FileContent::ResetLineMarkers()
     {
-        delete[] _lineStarts;
-        _lineStarts = nullptr;
-        _lineCount = 0;
+        _lineStarts.clear();
     }
 
     uint32_t FileContent::MarkLine(uint32_t position)
     {
-        auto lineNumber = _lineCount;
-        auto lineStarts = _lineStarts;
-
+        auto lineNumber = LineCount();
         assert(position == 0 || lineNumber > 0); // first line must start at position 0
 
-        if (lineNumber >= _lineCapacity)
-        {
-            // we need more room to store the next line start
-            auto newCapacity = std::max(60u, (lineNumber + 1) * 2);
-            auto newLineStarts = new uint32_t[newCapacity];
-
-            if (lineStarts != nullptr)
-            {
-                // copy existing line start data
-                memcpy(newLineStarts, lineStarts, lineNumber * sizeof(uint32_t));
-                delete lineStarts;
-            }
-
-            _lineStarts = newLineStarts;
-            lineStarts = newLineStarts;
-        }
-
-        lineStarts[lineNumber] = position;
-        _lineCount = lineNumber + 1;
-
+        _lineStarts.push_back(position);
         return lineNumber;
     }
 }

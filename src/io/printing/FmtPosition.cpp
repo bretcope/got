@@ -2,14 +2,14 @@
 
 namespace mot
 {
-    FmtPosition::FmtPosition(const Node* node):
-            _span(node->Position()),
+    FmtPosition::FmtPosition(const Node& node):
+            _span(node.Position()),
             _flags(FmtPositionFlags::Default)
     {
     }
 
-    FmtPosition::FmtPosition(const mot::Token* token):
-            _span(token->Text()),
+    FmtPosition::FmtPosition(const mot::Token& token):
+            _span(token.Text()),
             _flags(FmtPositionFlags::Default)
     {
     }
@@ -20,7 +20,7 @@ namespace mot
     {
     }
 
-    FmtPosition::FmtPosition(const mot::FileContent* content, uint32_t position):
+    FmtPosition::FmtPosition(const mot::FileContent& content, uint32_t position):
             _span(content, position, position),
             _flags(FmtPositionFlags::Default)
     {
@@ -37,13 +37,13 @@ namespace mot
 
         if ((flags & FmtPositionFlags::Filename) != FmtPositionFlags::None)
         {
-            os << " \"" << fmt._span.Content()->Filename() << "\"";
+            os << " \"" << fmt._span.Content().Filename() << "\"";
         }
 
         if ((flags & (FmtPositionFlags::Line | FmtPositionFlags::Column)) != FmtPositionFlags::None)
         {
             uint32_t line, column;
-            fmt._span.Content()->PositionDetails(fmt._span.Start(), &line, nullptr, &column);
+            fmt._span.Content().PositionDetails(fmt._span.Start(), &line, nullptr, &column);
 
             os.write(" ", 1);
 

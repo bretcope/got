@@ -8,29 +8,28 @@ namespace mot
 {
     class Parser
     {
-        Lexer* _lexer;
-        FileContent* _content;
         const Console& _console;
+        Lexer& _lexer;
+        FileContent& _content;
 
     public:
-        Parser(const Console& console, Lexer* lexer, FileContent* content);
+        Parser(const Console& console, Lexer& lexer, FileContent& content);
         Parser(const Parser&) = delete;
         Parser(Parser&&) = delete;
-        ~Parser();
 
-        bool ParseFile(FileNode** out_node);
+        UP<FileNode> ParseFile();
 
-        bool ParsePropertyList(PropertyListNode** out_node);
+        UP<PropertyListNode> ParsePropertyList();
 
-        bool ParseProperty(PropertyNode** out_node);
+        UP<PropertyNode> ParseProperty();
 
-        bool ParsePropertyDeclaration(PropertyDeclarationNode** out_node);
+        UP<PropertyDeclarationNode> ParsePropertyDeclaration();
 
-        bool ParsePropertyValue(PropertyValueNode** out_node);
+        UP<PropertyValueNode> ParsePropertyValue();
 
-        bool ParsePropertyBlock(PropertyBlockNode** out_node);
+        UP<PropertyBlockNode> ParsePropertyBlock();
 
-        bool RequireToken(TokenType type, Token** out_token);
+        UP<Token> RequireToken(TokenType type);
 
         void UnexpectedToken(TokenType expected);
 
@@ -39,41 +38,37 @@ namespace mot
         void UnexpectedToken(int expectedCount, TokenType* expectedList);
     };
 
-    Parser::Parser(const Console& console, Lexer* lexer, FileContent* content) :
+    Parser::Parser(const Console& console, Lexer& lexer, FileContent& content) :
+            _console(console),
             _lexer(lexer),
-            _content(content),
-            _console(console)
+            _content(content)
     {
     }
 
-    Parser::~Parser() = default;
 
-
-    bool ParseConfigurationFile(const Console& console, FileContent* content, FileNode** out_tree)
+    UP<FileNode> ParseConfigurationFile(const Console& console, FileContent& content)
     {
         Lexer lexer(console, content);
-        Parser parser(console, &lexer, content);
+        Parser parser(console, lexer, content);
 
-        return parser.ParseFile(out_tree);
+        return parser.ParseFile();
     }
 
 /*
 File
     PropertyList endOfInput
  */
-    bool Parser::ParseFile(FileNode** out_node)
+    UP<FileNode> Parser::ParseFile()
     {
-        PropertyListNode* propList = nullptr;
-        Token* endOfInput = nullptr;
-        if (ParsePropertyList(&propList) && RequireToken(TokenType::EndOfInput, &endOfInput))
-        {
-            *out_node = new FileNode(propList, endOfInput);
-            return true;
-        }
+        auto propList = ParsePropertyList();
+        if (propList == nullptr)
+            return nullptr;
 
-        delete propList;
-        delete endOfInput;
-        return false;
+        auto endOfInput = RequireToken(TokenType::EndOfInput);
+        if (endOfInput == nullptr)
+            return nullptr;
+
+        return UP<FileNode>(new FileNode(std::move(propList), std::move(endOfInput)));
     }
 
 /*
@@ -81,57 +76,22 @@ PropertyList
     Property PropertyList
     Property
  */
-    bool Parser::ParsePropertyList(PropertyListNode** out_node)
+    UP<PropertyListNode> Parser::ParsePropertyList()
     {
-        auto count = 0;
-        auto capacity = 0;
-        PropertyNode** properties = nullptr; // this should probably be std::vector<PropertyNode*> or some other wrapper, but... ¯\_(ツ)_/¯
-
+        std::vector<UP<PropertyNode>> properties;
         do
         {
-            PropertyNode* prop;
-            if (ParseProperty(&prop))
-            {
-                if (count >= capacity)
-                {
-                    auto newCapacity = std::max(8, capacity * 2);
-                    auto newProps = new PropertyNode* [newCapacity];
-
-                    if (properties != nullptr)
-                    {
-                        memcpy(newProps, properties, sizeof(PropertyNode*) * count);
-                        delete[] properties;
-                    }
-
-                    capacity = newCapacity;
-                    properties = newProps;
-                }
-
-                properties[count] = prop;
-                count++;
-            }
+            if (auto prop = ParseProperty())
+                properties.push_back(std::move(prop));
             else
-            {
-                goto FAILURE;
-            }
+                return nullptr;
 
-        } while (_lexer->PeekType() == TokenType::Word);
+        } while (_lexer.PeekType() == TokenType::Word);
 
-        if (count > 0)
-        {
-            *out_node = new PropertyListNode(properties, count);
-            return true;
-        }
+        if (properties.size() == 0)
+            return nullptr;
 
-        FAILURE:
-        for (auto i = 0; i < count; i++)
-        {
-            delete properties[i];
-        }
-
-        delete properties;
-        *out_node = nullptr;
-        return false;
+        return UP<PropertyListNode>(new PropertyListNode(std::move(properties)));
     }
 
 /*
@@ -139,50 +99,38 @@ Property
     PropertyDeclaration PropertyValue endOfLine
     PropertyDeclaration endOfLine PropertyBlock_opt
  */
-    bool Parser::ParseProperty(PropertyNode** out_node)
+    UP<PropertyNode> Parser::ParseProperty()
     {
-        PropertyDeclarationNode* declaration;
-        if (!ParsePropertyDeclaration(&declaration))
-            return false;
+        auto declaration = ParsePropertyDeclaration();
+        if (declaration == nullptr)
+            return nullptr;
 
-        if (_lexer->PeekType() == TokenType::EndOfLine)
+        if (_lexer.PeekType() == TokenType::EndOfLine)
         {
-            Token* endOfLine = _lexer->Advance();
+            auto endOfLine = _lexer.Advance();
 
-            if (_lexer->PeekType() != TokenType::Indent)
+            if (_lexer.PeekType() != TokenType::Indent)
             {
                 // no optional block
-                *out_node = new PropertyNode(declaration, endOfLine);
-                return true;
+                return UP<PropertyNode>(new PropertyNode(std::move(declaration), std::move(endOfLine)));
             }
 
-            PropertyBlockNode* block;
-            if (ParsePropertyBlock(&block))
-            {
-                *out_node = new PropertyNode(declaration, endOfLine, block);
-                return true;
-            }
+            auto block = ParsePropertyBlock();
+            if (block == nullptr)
+                return nullptr;
 
-            delete endOfLine;
-            delete block;
-        }
-        else
-        {
-            PropertyValueNode* value = nullptr;
-            Token* endOfLine = nullptr;
-            if (ParsePropertyValue(&value) && RequireToken(TokenType::EndOfLine, &endOfLine))
-            {
-                *out_node = new PropertyNode(declaration, value, endOfLine);
-                return true;
-            }
-
-            delete value;
-            delete endOfLine;
+            return UP<PropertyNode>(new PropertyNode(std::move(declaration), std::move(endOfLine), std::move(block)));
         }
 
-        delete declaration;
-        *out_node = nullptr;
-        return false;
+        auto value = ParsePropertyValue();
+        if (value == nullptr)
+            return nullptr;
+
+        auto endOfLine = RequireToken(TokenType::EndOfLine);
+        if (endOfLine == nullptr)
+            return nullptr;
+
+        return UP<PropertyNode>(new PropertyNode(std::move(declaration), std::move(value), std::move(endOfLine)));
     }
 
 /*
@@ -192,27 +140,20 @@ PropertyDeclaration
     word quotedText
     word
  */
-    bool Parser::ParsePropertyDeclaration(PropertyDeclarationNode** out_node)
+    UP<PropertyDeclarationNode> Parser::ParsePropertyDeclaration()
     {
-        Token* type;
-        if (!RequireToken(TokenType::Word, &type))
-        {
-            *out_node = nullptr;
-            return false;
-        }
+        auto type = RequireToken(TokenType::Word);
+        if (type == nullptr)
+            return nullptr;
 
-        auto peekType = _lexer->PeekType();
+        auto peekType = _lexer.PeekType();
         if (peekType == TokenType::Word || peekType == TokenType::QuotedText)
         {
-            auto name = _lexer->Advance();
-            *out_node = new PropertyDeclarationNode(type, name);
-        }
-        else
-        {
-            *out_node = new PropertyDeclarationNode(type);
+            auto name = _lexer.Advance();
+            return UP<PropertyDeclarationNode>(new PropertyDeclarationNode(std::move(type), std::move(name)));
         }
 
-        return true;
+        return UP<PropertyDeclarationNode>(new PropertyDeclarationNode(std::move(type)));
     }
 
 /*
@@ -221,77 +162,67 @@ PropertyValue
     : lineText
     > blockText
  */
-    bool Parser::ParsePropertyValue(PropertyValueNode** out_node)
+    UP<PropertyValueNode> Parser::ParsePropertyValue()
     {
-        auto peekType = _lexer->PeekType();
+        auto peekType = _lexer.PeekType();
         if (peekType == TokenType::Colon)
         {
-            auto colon = _lexer->Advance();
+            auto colon = _lexer.Advance();
 
-            peekType = _lexer->PeekType();
+            peekType = _lexer.PeekType();
             if (peekType == TokenType::LineText || peekType == TokenType::QuotedText)
             {
-                auto text = _lexer->Advance();
-                *out_node = new PropertyValueNode(colon, text);
-                return true;
+                auto text = _lexer.Advance();
+                return UP<PropertyValueNode>(new PropertyValueNode(std::move(colon), std::move(text)));
             }
 
             UnexpectedToken(TokenType::LineText, TokenType::QuotedText);
-            delete colon;
+            return nullptr;
         }
-        else if (peekType == TokenType::GreaterThan)
+
+        if (peekType == TokenType::GreaterThan)
         {
-            auto greaterThan = _lexer->Advance();
+            auto greaterThan = _lexer.Advance();
 
-            Token* blockText;
-            if (RequireToken(TokenType::BlockText, &blockText))
-            {
-                *out_node = new PropertyValueNode(greaterThan, blockText);
-                return true;
-            }
+            auto blockText = RequireToken(TokenType::BlockText);
+            if (blockText == nullptr)
+                return nullptr;
 
-            delete greaterThan;
-        }
-        else
-        {
-            UnexpectedToken(TokenType::Colon, TokenType::GreaterThan);
+            return UP<PropertyValueNode>(new PropertyValueNode(std::move(greaterThan), std::move(blockText)));
         }
 
-        *out_node = nullptr;
-        return false;
+        UnexpectedToken(TokenType::Colon, TokenType::GreaterThan);
+        return nullptr;
     }
 
 /*
 PropertyBlock
     indent PropertyList outdent
  */
-    bool Parser::ParsePropertyBlock(PropertyBlockNode** out_node)
+    UP<PropertyBlockNode> Parser::ParsePropertyBlock()
     {
-        Token* indent = nullptr;
-        PropertyListNode* propList = nullptr;
-        Token* outdent = nullptr;
+        auto indent = RequireToken(TokenType::Indent);
+        if (indent == nullptr)
+            return nullptr;
 
-        if (RequireToken(TokenType::Indent, &indent) && ParsePropertyList(&propList) && RequireToken(TokenType::Outdent, &outdent))
-        {
-            *out_node = new PropertyBlockNode(indent, propList, outdent);
-            return true;
-        }
+        auto propList = ParsePropertyList();
+        if (propList == nullptr)
+            return nullptr;
 
-        delete indent;
-        delete propList;
-        delete outdent;
-        *out_node = nullptr;
-        return false;
+        auto outdent = RequireToken(TokenType::Outdent);
+        if (outdent == nullptr)
+            return nullptr;
+
+        return UP<PropertyBlockNode>{new PropertyBlockNode(std::move(indent), std::move(propList), std::move(outdent))};
     }
 
-    bool Parser::RequireToken(TokenType type, Token** out_token)
+    UP<Token> Parser::RequireToken(TokenType type)
     {
-        if (_lexer->Consume(type, out_token))
-            return true;
+        auto token = _lexer.Consume(type);
+        if (token == nullptr)
+            UnexpectedToken(type);
 
-        UnexpectedToken(type);
-        *out_token = nullptr;
-        return false;
+        return token;
     }
 
     void Parser::UnexpectedToken(TokenType expected)
@@ -307,12 +238,12 @@ PropertyBlock
 
     void Parser::UnexpectedToken(int expectedCount, TokenType* expectedList)
     {
-        auto token = _lexer->Advance();
+        auto token = _lexer.Advance();
 
         if (token->Type() != TokenType::Error)
         {
             _console.Error() << "Error: Unexpected Token " << token->Type() << '\n';
-            _console.Error() << FmtPosition(token);
+            _console.Error() << FmtPosition(*token);
 
             if (expectedCount > 0)
             {
@@ -329,7 +260,5 @@ PropertyBlock
                 _console.Error() << '\n';
             }
         }
-
-        delete token;
     }
 }

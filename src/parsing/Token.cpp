@@ -7,37 +7,13 @@
 
 namespace mot
 {
-    Token::Token(TokenType type, FileSpan trivia, FileSpan text, MotString* value) :
-            _type(type),
-            _trivia(trivia),
-            _text(text),
-            _value(value)
+    Token::Token(TokenType type, FileSpan trivia, FileSpan text, MotString value) :
+            _type{type},
+            _trivia{trivia},
+            _text{text},
+            _value{value}
     {
         assert(trivia.End() == text.Start());
-
-#ifndef NDEBUG
-        switch (type)
-        {
-            case TokenType::Word:
-            case TokenType::LineText:
-            case TokenType::QuotedText:
-            case TokenType::BlockText:
-                assert(value != nullptr);
-                break;
-            default:
-                assert(value == nullptr);
-        }
-#endif
-    }
-
-    Token::~Token()
-    {
-        delete _value;
-    }
-
-    bool Token::IsToken() const
-    {
-        return true;
     }
 
     TokenType Token::Type() const
@@ -53,6 +29,16 @@ namespace mot
     const FileSpan& Token::Text() const
     {
         return _text;
+    }
+
+    const MotString& Token::Value() const
+    {
+        return _value;
+    }
+
+    SP<const char> Token::Filename() const
+    {
+        return _text.Content().Filename();
     }
 
     void Token::DebugPrint(std::ostream& os, bool positions, bool color) const
@@ -77,11 +63,11 @@ namespace mot
         if (positions)
         {
             uint32_t lineNumber, lineStart, column;
-            _text.Content()->PositionDetails(start, &lineNumber, &lineStart, &column);
+            _text.Content().PositionDetails(start, &lineNumber, &lineStart, &column);
             os << lineNumber << ':' << column + 1;
         }
 
-        if (_value != nullptr)
+        if (!MotString::IsEmpty(_value))
         {
             if (_type == TokenType::BlockText)
                 os << '\n';
@@ -90,15 +76,5 @@ namespace mot
         }
 
         os << '\n' << reset;
-    }
-
-    const MotString* Token::Value() const
-    {
-        return _value;
-    }
-
-    const char* Token::Filename() const
-    {
-        return _text.Content()->Filename();
     }
 }

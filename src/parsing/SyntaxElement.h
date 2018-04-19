@@ -6,8 +6,7 @@ namespace mot
     class SyntaxElement
     {
     public:
-        virtual bool IsToken() const = 0;
-        inline bool IsNode() const { return !IsToken(); }
+        virtual ~SyntaxElement() = 0;
     };
 }
 

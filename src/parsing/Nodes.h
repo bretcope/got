@@ -51,15 +51,12 @@ namespace mot
     class Node : public SyntaxElement
     {
     public:
-        bool IsToken() const final;
-
         virtual NodeType Type() const = 0;
 
         virtual void GetSyntaxElements(std::vector<const SyntaxElement*>& list) const = 0;
-        virtual const char* Filename() const = 0;
 
-        int VisitTokens(std::function<void(const Token*)> callback) const;
-        int VisitNodes(std::function<void(const Node* node, int level)> callback) const;
+        int VisitTokens(std::function<void(const Token& token)> callback) const;
+        int VisitNodes(std::function<void(const Node & node, int level)> callback) const;
         FileSpan Position() const;
     };
 
@@ -78,68 +75,59 @@ namespace mot
     class FileNode final : public Node
     {
     private:
-        PropertyListNode* _propertyList;
-        Token* _endOfInput;
+        UP<PropertyListNode> _propertyList;
+        UP<Token> _endOfInput;
 
     public:
-        FileNode(PropertyListNode* propertyList, Token* endOfInput);
+        FileNode(UP<PropertyListNode>&& propertyList, UP<Token>&& endOfInput);
         FileNode(const FileNode&) = delete;
         FileNode(FileNode&&) = delete;
-        ~FileNode();
 
         NodeType Type() const override;
 
         void GetSyntaxElements(std::vector<const SyntaxElement*>& list) const override;
-        const char* Filename() const override;
 
-        const PropertyListNode* PropertyList() const;
+        PropertyListNode const& PropertyList() const;
     };
 
     class PropertyListNode final : public Node
     {
     private:
-        PropertyNode** _properties;
-        int _count;
+        std::vector<mot::UP<PropertyNode>> _properties;
 
     public:
-        PropertyListNode(PropertyNode** properties, int count);
+        explicit PropertyListNode(std::vector<mot::UP<PropertyNode>>&& properties);
         PropertyListNode(const PropertyListNode&) = delete;
         PropertyListNode(PropertyListNode&&) = delete;
-        ~PropertyListNode();
 
         NodeType Type() const override;
 
         void GetSyntaxElements(std::vector<const SyntaxElement*>& list) const override;
-        const char* Filename() const override;
 
-        const PropertyNode* GetProperty(int index) const;
-
-        int Count() const;
+        uint32_t Count() const;
+        const PropertyNode& Property(uint32_t index) const;
     };
 
 
     class PropertyNode final : public Node
     {
     private:
-        PropertyDeclarationNode* _declaration;
-        PropertyValueNode* _value;
-        Token* _endOfLine;
-        PropertyBlockNode* _block;
+        UP<PropertyDeclarationNode> _declaration;
+        UP<PropertyValueNode> _value;
+        UP<Token> _endOfLine;
+        UP<PropertyBlockNode> _block;
 
     public:
-        PropertyNode(PropertyDeclarationNode* declaration, Token* endOfLine);
-        PropertyNode(PropertyDeclarationNode* declaration, PropertyValueNode* value, Token* endOfLine);
-        PropertyNode(PropertyDeclarationNode* declaration, Token* endOfLine, PropertyBlockNode* block);
+        PropertyNode(UP<PropertyDeclarationNode>&& declaration, UP<Token>&& endOfLine);
+        PropertyNode(UP<PropertyDeclarationNode>&& declaration, UP<PropertyValueNode>&& value, UP<Token>&& endOfLine);
+        PropertyNode(UP<PropertyDeclarationNode>&& declaration, UP<Token>&& endOfLine, UP<PropertyBlockNode>&& block);
         PropertyNode(const PropertyNode&) = delete;
-        PropertyNode(PropertyNode&&) = delete;
-        ~PropertyNode();
 
         NodeType Type() const override;
 
         void GetSyntaxElements(std::vector<const SyntaxElement*>& list) const override;
-        const char* Filename() const override;
 
-        const PropertyDeclarationNode* Declaration() const;
+        const PropertyDeclarationNode& Declaration() const;
 
         bool HasValue() const;
 
@@ -153,63 +141,57 @@ namespace mot
     class PropertyDeclarationNode final : public Node
     {
     private:
-        Token* _type;
-        Token* _name;
+        UP<Token> _type;
+        UP<Token> _name;
 
     public:
-        explicit PropertyDeclarationNode(Token* type);
-        PropertyDeclarationNode(Token* type, Token* name);
+        explicit PropertyDeclarationNode(UP<Token>&& type);
+        PropertyDeclarationNode(UP<Token>&& type, UP<Token>&& name);
         PropertyDeclarationNode(const PropertyDeclarationNode&) = delete;
         PropertyDeclarationNode(PropertyDeclarationNode&&) = delete;
-        ~PropertyDeclarationNode();
 
         NodeType Type() const override;
 
         void GetSyntaxElements(std::vector<const SyntaxElement*>& list) const override;
-        const char* Filename() const override;
 
-        const MotString* PropertyType() const;
-        const MotString* PropertyName() const;
+        MotString PropertyType() const;
+        MotString PropertyName() const;
     };
 
     class PropertyValueNode final : public Node
     {
-        Token* _specifier;
-        Token* _text;
+        UP<Token> _specifier;
+        UP<Token> _text;
 
     public:
-        PropertyValueNode(Token* specifier, Token* text);
+        PropertyValueNode(UP<Token>&& specifier, UP<Token>&& text);
         PropertyValueNode(const PropertyValueNode&) = delete;
         PropertyValueNode(PropertyValueNode&&) = delete;
-        ~PropertyValueNode();
 
         NodeType Type() const override;
 
         void GetSyntaxElements(std::vector<const SyntaxElement*>& list) const override;
-        const char* Filename() const override;
 
-        const MotString* Value() const;
+        MotString Value() const;
     };
 
     class PropertyBlockNode final : public Node
     {
     private:
-        Token* _indent;
-        PropertyListNode* _propertyList;
-        Token* _outdent;
+        UP<Token> _indent;
+        UP<PropertyListNode> _propertyList;
+        UP<Token> _outdent;
 
     public:
-        PropertyBlockNode(Token* indent, PropertyListNode* propertyList, Token* outdent);
+        PropertyBlockNode(UP<Token>&& indent, UP<PropertyListNode>&& propertyList, UP<Token>&& outdent);
         PropertyBlockNode(const PropertyBlockNode&) = delete;
         PropertyBlockNode(PropertyBlockNode&&) = delete;
-        ~PropertyBlockNode();
 
         NodeType Type() const override;
 
         void GetSyntaxElements(std::vector<const SyntaxElement*>& list) const override;
-        const char* Filename() const override;
 
-        const PropertyListNode* PropertyList() const;
+        const PropertyListNode& PropertyList() const;
     };
 }
 

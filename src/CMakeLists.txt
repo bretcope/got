@@ -40,6 +40,8 @@ add_library(cmotlib
             parsing/SyntaxElement.h
             parsing/Token.cpp
             parsing/Token.h
+            text/ByString.cpp
+            text/ByString.h
             text/Collections.h
             text/Constants.cpp
             text/Constants.h
