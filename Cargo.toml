@@ -1,0 +1,7 @@
+[package]
+name = "cmot"
+version = "0.1.0"
+authors = ["Bret Copeland <bret@atlantisflight.org>"]
+
+[dependencies]
+failure = "0.1.1"

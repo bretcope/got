@@ -5,3 +5,5 @@
 .vs
 CMakeSettings.json
 /lib
+
+/target
