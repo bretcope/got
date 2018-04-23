@@ -1,8 +1,7 @@
-
+use std::str::CharIndices;
 use std::fs::File;
 use std::io::Read;
 use std::cell::RefCell;
-use std::borrow::BorrowMut;
 use failure::Error;
 
 #[derive(Debug)]
@@ -31,6 +30,17 @@ impl FileContent {
 
     pub fn text(&self) -> &str {
         &self.text_
+    }
+
+    pub fn iter(&self, start: usize) -> ContentIterator {
+        ContentIterator {
+            iterator_: self.text_[start..].char_indices(),
+            start_: start,
+            end_: self.text_.len(),
+            relative_position_: 0,
+            current_char_: '\0',
+            is_end_of_input_: false,
+        }
     }
 
     pub fn position_details(&self, position: usize) -> PositionDetails {
@@ -96,8 +106,53 @@ impl FileContent {
     }
 }
 
+#[derive(Debug)]
 pub struct PositionDetails {
     pub line_number: usize,
     pub line_start: usize,
     pub column: usize,
+}
+
+#[derive(Debug)]
+pub struct ContentIterator<'a> {
+    iterator_: CharIndices<'a>,
+    start_: usize,
+    end_: usize,
+    relative_position_: usize,
+    current_char_: char,
+    is_end_of_input_: bool,
+}
+
+impl<'a> Iterator for ContentIterator<'a> {
+    type Item = char;
+
+    fn next(&mut self) -> Option<char> {
+        match self.iterator_.next() {
+            Some((i, ch)) => {
+                self.relative_position_ = i;
+                self.current_char_ = ch;
+                Some(ch)
+            },
+            None => {
+                self.is_end_of_input_ = true;
+                self.relative_position_ = self.end_ - self.start_;
+                self.current_char_ = '\0';
+                None
+            }
+        }
+    }
+}
+
+impl<'a> ContentIterator<'a> {
+    pub fn is_end_of_input(&self) -> bool {
+        self.is_end_of_input_
+    }
+
+    pub fn position(&self) -> usize {
+        self.relative_position_ + self.start_
+    }
+
+    pub fn current_char(&self) -> char {
+        self.current_char_
+    }
 }

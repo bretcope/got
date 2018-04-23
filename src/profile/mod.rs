@@ -1,7 +1,7 @@
 mod content;
 
 use failure::Error;
-pub use self::content::FileContent;
+pub use self::content::*;
 
 pub struct Profile {
     _contents: Vec<FileContent>,
