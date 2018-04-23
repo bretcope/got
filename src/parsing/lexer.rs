@@ -7,9 +7,12 @@ pub type LexerResult<'a> = Result<Box<Token<'a>>, ParserError>;
 
 pub struct Lexer<'a> {
     content_: &'a profile::FileContent,
-    content_iterator_: Peekable<CharIndices<'a>>,
-    position_: usize,
+    content_iterator_: CharIndices<'a>,
+    current_char_: char,
+    is_end_of_input_: bool,
+    current_position_: usize,
     trivia_start_: usize,
+    text_start_: usize,
     indent_level_: usize,
     line_start_: usize,
     line_spaces_: usize,
@@ -22,17 +25,24 @@ impl<'a> Lexer<'a> {
     pub const SPACES_PER_INDENT: usize = 4;
 
     pub fn new(content: &'a profile::FileContent) -> Lexer<'a> {
-        Lexer {
+        let mut lexer = Lexer {
             content_: content,
-            content_iterator_: content.text().char_indices().peekable(),
-            position_: 0,
+            content_iterator_: content.text().char_indices(),
+            current_char_: '\0',
+            is_end_of_input_: false,
+            current_position_: 0,
+            text_start_: 0,
             trivia_start_: 0,
             indent_level_: 0,
             line_start_: 0,
             line_spaces_: 0,
             last_token_type_: TokenType::StartOfInput,
             next_result_: None,
-        }
+        };
+
+        lexer.consume_char(); // load the first character to start
+        debug_assert_eq!(lexer.current_position_, 0, "The position of the first character should have been zero.");
+        lexer
     }
 
     pub fn peek_type(&'a mut self) -> TokenType {
@@ -65,17 +75,11 @@ impl<'a> Lexer<'a> {
             panic!("MOT Bug: Parser scanned past end of input.");
         }
 
-        debug_assert_eq!(self.position_, self.iterator_position(), "Iterator does not match the lexer's current position at the beginning of lex().");
-
         self.consume_trivia();
 
-        debug_assert_eq!(self.position_, self.iterator_position(), "Iterator does not match the lexer's current position after consuming trivia.");
-
-        // either grab the next character, or run end-of-input lexing
-        let ch = match self.content_iterator_.peek() {
-            Some(&(_, ch)) => ch,
-            None => return self.lex_end_of_input(),
-        };
+        if self.is_end_of_input_ {
+            return self.lex_end_of_input();
+        }
 
         // these are the tokens after which we need to be concerned about an indent or outdent
         match last_type {
@@ -83,10 +87,10 @@ impl<'a> Lexer<'a> {
             TokenType::EndOfLine |
             TokenType::Indent |
             TokenType::Outdent => {
-                if self.position_ != self.line_start_ + self.line_spaces_ {
+                if self.text_start_ != self.line_start_ + self.line_spaces_ {
                     // the whitespace consumed at the start of the line doesn't match the number of spaces at the start of the line, which means there might be
                     // a tab character.
-                    for (i, wc) in self.content_.text()[self.line_start_..self.position_].char_indices() {
+                    for (i, wc) in self.content_.text()[self.line_start_..self.text_start_].char_indices() {
                         if wc == '\t' {
                             return Err(ParserError::new(self.content_, self.line_start_ + i, "Tab character used for indentation. Four spaces must be used for indentation."))
                         }
@@ -100,25 +104,25 @@ impl<'a> Lexer<'a> {
             _ => {},
         };
 
-        match ch {
+        match self.current_char_ {
             ':' => {
-                self.content_iterator_.next();
+                self.consume_char();
                 self.new_token(TokenType::Colon, None)
             },
             '>' => {
-                self.content_iterator_.next();
+                self.consume_char();
                 self.new_token(TokenType::GreaterThan, None)
             },
             '"' => self.lex_quoted_text(),
             '\r' |
             '\n' => match last_type {
                 TokenType::GreaterThan => self.lex_block_text(),
-                _ => self.lex_end_of_line(ch),
+                _ => self.lex_end_of_line(),
             },
             _ => {
                 if let TokenType::Colon = last_type {
                     self.lex_line_text()
-                } else if self.is_current_char_alpha() {
+                } else if is_alpha(self.current_char_) {
                     self.lex_word()
                 } else {
                     self.err("Unexpected character.")
@@ -128,14 +132,14 @@ impl<'a> Lexer<'a> {
     }
 
     fn consume_trivia(&mut self) {
-        self.trivia_start_ = self.position_;
+        self.trivia_start_ = self.current_position_;
         let mut is_comment = false;
 
-        while let Some(&(i, ch)) = self.content_iterator_.peek() {
-            match ch {
+        while !self.is_end_of_input_ {
+            match self.current_char_ {
                 ' ' |
                 '\t' => {
-                    self.content_iterator_.next();
+                    self.consume_char();
                 },
                 '\r' |
                 '\n' => {
@@ -144,11 +148,10 @@ impl<'a> Lexer<'a> {
                         TokenType::EndOfInput |
                         TokenType::StartOfInput |
                         TokenType::Outdent => {
-                            self.content_iterator_.next();
-                            if ch == '\r' {
-                                if let Some(&(_, '\n')) = self.content_iterator_.peek() {
-                                    self.content_iterator_.next();
-                                }
+                            let first_ch = self.current_char_;
+                            self.consume_char();
+                            if first_ch == '\r' && self.current_char_ == '\n' {
+                                self.consume_char();
                             }
 
                             self.start_new_line();
@@ -158,12 +161,12 @@ impl<'a> Lexer<'a> {
                     }
                 },
                 '#' => {
-                    self.content_iterator_.next();
+                    self.consume_char();
                     is_comment = true;
                 },
                 _ => {
                     if is_comment {
-                        self.content_iterator_.next();
+                        self.consume_char();
                     } else {
                         break;
                     }
@@ -171,11 +174,11 @@ impl<'a> Lexer<'a> {
             };
         }
 
-        self.position_ = self.iterator_position();
+        self.text_start_ = self.current_position_;
     }
 
     fn lex_end_of_input(&mut self) -> LexerResult {
-        debug_assert_eq!(self.position_, self.content_.text().len());
+        debug_assert_eq!(self.text_start_, self.content_.text().len());
 
         match self.last_token_type_ {
             TokenType::GreaterThan => self.lex_block_text(),
@@ -211,16 +214,13 @@ impl<'a> Lexer<'a> {
         self.err("Misaligned indentation. Indents must be multiples of four spaces.")
     }
 
-    fn lex_end_of_line(&mut self, current_ch: char) -> LexerResult {
-        debug_assert!(self.is_current_char_new_line());
-        debug_assert!(current_ch == '\r' || current_ch == '\n');
-        debug_assert_eq!(self.position_, self.iterator_position());
+    fn lex_end_of_line(&mut self) -> LexerResult {
+        debug_assert!(is_new_line(self.current_char_));
 
-        self.content_iterator_.next();
-        if current_ch == '\r' {
-            if let Some(&(_, '\n')) = self.content_iterator_.peek() {
-                self.content_iterator_.next();
-            }
+        let first_ch = self.current_char_;
+        self.consume_char();
+        if first_ch == '\r' && self.current_char_ == '\n' {
+            self.consume_char();
         }
 
         self.start_new_line();
@@ -228,33 +228,29 @@ impl<'a> Lexer<'a> {
     }
 
     fn lex_word(&mut self) -> LexerResult {
-        debug_assert_eq!(self.position_, self.iterator_position());
-        debug_assert!(self.is_current_char_alpha());
+        debug_assert!(is_alpha(self.current_char_));
 
-        self.content_iterator_.next();
+        self.consume_char();
 
-        while self.is_current_char_alpha() {
-            self.content_iterator_.next();
+        while is_alpha(self.current_char_) {
+            self.consume_char();
         }
 
-        let value = String::from(&self.content_.text()[self.position_..self.iterator_position()]);
+        let value = String::from(&self.content_.text()[self.text_start_..self.current_position_]);
         self.new_token(TokenType::Word, Some(value))
     }
 
     fn lex_line_text(&mut self) -> LexerResult {
-        debug_assert_eq!(self.position_, self.iterator_position());
 
         unimplemented!()
     }
 
     fn lex_quoted_text(&mut self) -> LexerResult {
-        debug_assert_eq!(self.position_, self.iterator_position());
 
         unimplemented!()
     }
 
     fn lex_block_text(&mut self) -> LexerResult {
-        debug_assert_eq!(self.position_, self.iterator_position());
 
         unimplemented!()
     }
@@ -268,9 +264,8 @@ impl<'a> Lexer<'a> {
     }
 
     fn new_token(&mut self, token_type: TokenType, value: Option<String>) -> LexerResult {
-        let text_start = self.position_;
-        let text_end = self.iterator_position();
-        self.position_ = text_end;
+        let text_start = self.text_start_;
+        let text_end = self.current_position_;
         self.last_token_type_ = token_type;
 
         match token_type {
@@ -299,37 +294,43 @@ impl<'a> Lexer<'a> {
         }))
     }
 
-    fn iterator_position(&mut self) -> usize {
-        match self.content_iterator_.peek() {
-            Some(&(i, _)) => i,
-            None => self.content_.text().len(),
-        }
-    }
-
     fn err(&self, message: &str) -> LexerResult {
-        Err(ParserError::new(self.content_, self.position_, message))
+        Err(ParserError::new(self.content_, self.text_start_, message))
     }
 
     fn start_new_line(&mut self) {
-        let line_start = self.iterator_position();
+        let line_start = self.current_position_;
         self.content_.mark_line(line_start);
         self.line_start_ = line_start;
         let remaining = &self.content_.text()[line_start..]; // create a new iterator so we don't screw up the position of the main iterator
         self.line_spaces_ = remaining.chars().take_while(|&ch| ch == ' ').count();
     }
 
-    fn is_current_char_new_line(&mut self) -> bool {
-        match self.content_iterator_.peek() {
-            Some(&(_, '\r')) |
-            Some(&(_, '\n')) => true,
-            _ => false,
+    fn consume_char(&mut self) -> char {
+        match self.content_iterator_.next() {
+            Some((pos, ch)) => {
+                self.current_char_ = ch;
+                self.current_position_ = pos;
+                ch
+            },
+            None => {
+                self.current_char_ = '\0';
+                self.current_position_ = self.content_.text().len();
+                self.is_end_of_input_ = true;
+                '\0'
+            }
         }
     }
+}
 
-    fn is_current_char_alpha(&mut self) -> bool {
-        match self.content_iterator_.peek() {
-            Some(&(_, ch)) => ch.is_ascii_alphabetic(),
-            None => false,
-        }
+fn is_new_line(ch: char) -> bool {
+    match ch {
+        '\r' |
+        '\n' => true,
+        _ => false,
     }
+}
+
+fn is_alpha(ch: char) -> bool {
+    ch.is_ascii_alphabetic()
 }
