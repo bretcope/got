@@ -2,11 +2,11 @@ use std;
 use profile;
 use super::*;
 
-pub type LexerResult<'a> = Result<Box<Token<'a>>, ParserError>;
+pub type LexerResult<'a> = Result<Box<Token<'a>>, ParsingError>;
 
 pub struct Lexer<'a> {
     content_: &'a profile::FileContent,
-    ch_iter: profile::ContentIterator<'a>,
+    ch_iter_: profile::ContentIterator<'a>,
     trivia_start_: usize,
     text_start_: usize,
     indent_level_: usize,
@@ -23,7 +23,7 @@ impl<'a> Lexer<'a> {
     pub fn new(content: &'a profile::FileContent) -> Lexer<'a> {
         let mut lexer = Lexer {
             content_: content,
-            ch_iter: content.iter(0),
+            ch_iter_: content.iter(0),
             text_start_: 0,
             trivia_start_: 0,
             indent_level_: 0,
@@ -33,8 +33,11 @@ impl<'a> Lexer<'a> {
             next_result_: None,
         };
 
-        lexer.ch_iter.next(); // load the first character to start
-        debug_assert_eq!(lexer.ch_iter.position(), 0, "The position of the first character should have been zero.");
+        content.reset_line_markers();
+        lexer.start_new_line(0);
+
+        lexer.ch_iter_.next(); // load the first character to start
+        debug_assert_eq!(lexer.ch_iter_.position(), 0, "The position of the first character should have been zero.");
         lexer
     }
 
@@ -70,7 +73,7 @@ impl<'a> Lexer<'a> {
 
         self.consume_trivia();
 
-        if self.ch_iter.is_end_of_input() {
+        if self.is_end_of_input() {
             return self.lex_end_of_input();
         }
 
@@ -85,7 +88,7 @@ impl<'a> Lexer<'a> {
                     // a tab character.
                     for (i, wc) in self.content_.text()[self.line_start_..self.text_start_].char_indices() {
                         if wc == '\t' {
-                            return Err(ParserError::new(self.content_, self.line_start_ + i, "Tab character used for indentation. Four spaces must be used for indentation."))
+                            return Err(ParsingError::new(self.content_, self.line_start_ + i, "Tab character used for indentation. Four spaces must be used for indentation."))
                         }
                     }
                 }
@@ -97,13 +100,13 @@ impl<'a> Lexer<'a> {
             _ => {},
         };
 
-        match self.ch_iter.current_char() {
+        match self.current_char() {
             ':' => {
-                self.ch_iter.next();
+                self.next_char();
                 self.new_token(TokenType::Colon, None)
             },
             '>' => {
-                self.ch_iter.next();
+                self.next_char();
                 self.new_token(TokenType::GreaterThan, None)
             },
             '"' => self.lex_quoted_text(),
@@ -115,7 +118,7 @@ impl<'a> Lexer<'a> {
             _ => {
                 if let TokenType::Colon = last_type {
                     self.lex_line_text()
-                } else if is_alpha(self.ch_iter.current_char()) {
+                } else if is_alpha(self.current_char()) {
                     self.lex_word()
                 } else {
                     self.err_result("Unexpected character.")
@@ -125,41 +128,42 @@ impl<'a> Lexer<'a> {
     }
 
     fn consume_trivia(&mut self) {
-        self.trivia_start_ = self.ch_iter.position();
+        self.trivia_start_ = self.position();
         let mut is_comment = false;
 
-        while !self.ch_iter.is_end_of_input() {
-            match self.ch_iter.current_char() {
+        while !self.is_end_of_input() {
+            match self.current_char() {
                 ' ' |
                 '\t' => {
-                    self.ch_iter.next();
+                    self.next_char();
                 },
                 '\r' |
                 '\n' => {
                     // The lexer isn't supposed to emit an EndOfLine token immediately after a StartOfInput, EndOfLine, or Outdent token.
                     match self.last_token_type_ {
-                        TokenType::EndOfInput |
+                        TokenType::EndOfLine |
                         TokenType::StartOfInput |
                         TokenType::Outdent => {
-                            let first_ch = self.ch_iter.current_char();
-                            self.ch_iter.next();
-                            if first_ch == '\r' && self.ch_iter.current_char() == '\n' {
-                                self.ch_iter.next();
+                            let first_ch = self.current_char();
+                            self.next_char();
+                            if first_ch == '\r' && self.current_char() == '\n' {
+                                self.next_char();
                             }
 
-                            self.start_new_line();
+                            let pos = self.position(); // can remove this temp when non-lexical lifetimes lands
+                            self.start_new_line(pos);
                             is_comment = false;
                         },
                         _ => break, // last token wasn't a StartOfInput, EndOfLine, or Outdent, so this new line is significant (don't consume it as trivia).
                     }
                 },
                 '#' => {
-                    self.ch_iter.next();
+                    self.next_char();
                     is_comment = true;
                 },
                 _ => {
                     if is_comment {
-                        self.ch_iter.next();
+                        self.next_char();
                     } else {
                         break;
                     }
@@ -167,7 +171,7 @@ impl<'a> Lexer<'a> {
             };
         }
 
-        self.text_start_ = self.ch_iter.position();
+        self.text_start_ = self.position();
     }
 
     fn lex_end_of_input(&mut self) -> LexerResult<'a> {
@@ -175,7 +179,7 @@ impl<'a> Lexer<'a> {
 
         match self.last_token_type_ {
             TokenType::GreaterThan => self.lex_block_text(),
-            TokenType::EndOfInput |
+            TokenType::EndOfLine |
             TokenType::Outdent => {
                 if self.indent_level_ > 0 {
                     self.indent_level_ -= 1;
@@ -208,113 +212,114 @@ impl<'a> Lexer<'a> {
     }
 
     fn lex_end_of_line(&mut self) -> LexerResult<'a> {
-        debug_assert!(is_new_line(self.ch_iter.current_char()));
+        debug_assert!(is_new_line(self.current_char()));
 
-        let first_ch = self.ch_iter.current_char();
-        self.ch_iter.next();
-        if first_ch == '\r' && self.ch_iter.current_char() == '\n' {
-            self.ch_iter.next();
+        let first_ch = self.current_char();
+        self.next_char();
+        if first_ch == '\r' && self.current_char() == '\n' {
+            self.next_char();
         }
 
-        self.start_new_line();
+        let pos = self.position(); // can remove this temp when non-lexical lifetimes lands
+        self.start_new_line(pos);
         self.new_token(TokenType::EndOfLine, None)
     }
 
     fn lex_word(&mut self) -> LexerResult<'a> {
-        debug_assert!(is_alpha(self.ch_iter.current_char()));
+        debug_assert!(is_alpha(self.current_char()));
 
-        self.ch_iter.next();
+        self.next_char();
 
-        while is_alpha(self.ch_iter.current_char()) {
-            self.ch_iter.next();
+        while is_alpha(self.current_char()) {
+            self.next_char();
         }
 
-        let value = String::from(&self.content_.text()[self.text_start_..self.ch_iter.position()]);
+        let value = String::from(&self.content_.text()[self.text_start_..self.position()]);
         self.new_token(TokenType::Word, Some(value))
     }
 
     fn lex_line_text(&mut self) -> LexerResult<'a> {
-        debug_assert_eq!(self.ch_iter.position(), self.text_start_);
+        debug_assert_eq!(self.position(), self.text_start_);
 
         let mut trailing_spaces = 0;
-        self.ch_iter.next();
+        self.next_char();
 
-        while !self.ch_iter.is_end_of_input() {
-            let ch = self.ch_iter.current_char();
+        while !self.is_end_of_input() {
+            let ch = self.current_char();
 
             if is_new_line(ch) || ch == '#' {
                 break;
             }
 
-            if ch != ' ' && ch != '\t' {
+            if ch == ' ' || ch == '\t' {
                 trailing_spaces += 1;
             } else {
                 trailing_spaces = 0;
             }
 
-            self.ch_iter.next();
+            self.next_char();
         }
 
         let start = self.text_start_;
-        let end = self.ch_iter.position() - trailing_spaces;
+        let end = self.position() - trailing_spaces;
         let value = String::from(&self.content_.text()[start..end]);
 
         if trailing_spaces > 0 {
             // reset the iterator back to the "end" position because we'd prefer for the trailing
             // whitespace to be consumed as trivia rather than text in a token.
-            self.ch_iter = self.content_.iter(end);
+            self.reset_iterator(end);
         }
 
         self.new_token(TokenType::LineText, Some(value))
     }
 
     fn lex_quoted_text(&mut self) -> LexerResult<'a> {
-        debug_assert_eq!(self.ch_iter.current_char(), '"');
+        debug_assert_eq!(self.current_char(), '"');
 
-        self.ch_iter.next();
+        self.next_char();
         let mut value = String::new();
-        let mut copyable_start = self.ch_iter.position();
-        while !self.ch_iter.is_end_of_input() {
-            let ch = self.ch_iter.current_char();
+        let mut copyable_start = self.position();
+        while !self.is_end_of_input() {
+            let ch = self.current_char();
 
             if is_new_line(ch) {
                 break;
             }
 
             if ch != '"' && ch != '\\' {
-                self.ch_iter.next();
+                self.next_char();
                 continue;
             }
 
             // copy any literal text that we can
-            let pos = self.ch_iter.position();
+            let pos = self.position();
             if pos > copyable_start {
                 value.push_str(&self.content_.text()[copyable_start..pos]);
             }
 
             if ch == '"' {
-                self.ch_iter.next(); // consume the close quote
+                self.next_char(); // consume the close quote
                 return self.new_token(TokenType::QuotedText, Some(value));
             }
 
             let escape_char = self.parse_escape_sequence()?;
             value.push(escape_char);
 
-            copyable_start = self.ch_iter.position();
+            copyable_start = self.position();
         }
 
         self.err_result("Unterminated quoted-string.")
     }
 
-    fn parse_escape_sequence(&mut self) -> Result<char, ParserError> {
-        debug_assert_eq!(self.ch_iter.current_char(), '\\');
+    fn parse_escape_sequence(&mut self) -> Result<char, ParsingError> {
+        debug_assert_eq!(self.current_char(), '\\');
 
-        let esc_pos = self.ch_iter.position();
-        self.ch_iter.next(); // consume backslash
+        let esc_pos = self.position();
+        self.next_char(); // consume backslash
 
-        if !self.ch_iter.is_end_of_input() {
-            let control_ch = self.ch_iter.current_char();
-            self.ch_iter.next(); // go ahead and consume the control character
+        if !self.is_end_of_input() {
+            let control_ch = self.current_char();
+            self.next_char(); // go ahead and consume the control character
             match control_ch {
                 '\'' |
                 '"' |
@@ -326,8 +331,8 @@ impl<'a> Lexer<'a> {
                 'u' => {
                     let mut digit_count = 0;
                     let mut code_point = 0u32;
-                    while digit_count < 6 && !self.ch_iter.is_end_of_input() {
-                        let mut digit_ch = self.ch_iter.current_char() as u32;
+                    while digit_count < 6 && !self.is_end_of_input() {
+                        let mut digit_ch = self.current_char() as u32;
 
                         const D0: u32 = '0' as u32;
                         const D9: u32 = '9' as u32;
@@ -336,21 +341,25 @@ impl<'a> Lexer<'a> {
 
                         if digit_ch >= D0 && digit_ch <= D9 {
                             code_point = (code_point << 4) | (digit_ch - 0x30);
+                            digit_count += 1;
+                            self.next_char();
                             continue;
                         }
 
                         digit_ch = digit_ch & !0x20_u32; // to uppercase
                         if digit_ch >= DA && digit_ch <= DZ {
                             code_point = (code_point << 4) | (digit_ch - DA + 10);
+                            digit_count += 1;
+                            self.next_char();
                             continue;
                         }
 
                         break; // not a hex digit
                     }
 
-                    if digit_count > 0 && code_point <= std::char::MAX as u32 {
-                        unsafe {
-                            return Ok(std::mem::transmute::<u32, char>(code_point));
+                    if digit_count > 0 {
+                        if let Some(esc_char) = std::char::from_u32(code_point) {
+                            return Ok(esc_char);
                         }
                     }
                 }
@@ -358,18 +367,75 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        Err(ParserError::new(self.content_, esc_pos, "Invalid escape sequence."))
+        Err(ParsingError::new(self.content_, esc_pos, "Invalid escape sequence."))
     }
 
     fn lex_block_text(&mut self) -> LexerResult<'a> {
-        //
+        debug_assert!(self.is_end_of_input() || is_new_line(self.current_char()));
 
-        unimplemented!()
+        let required_spaces = (self.indent_level_ + 1) * Lexer::SPACES_PER_INDENT;
+        let mut value = String::new();
+        let mut end = self.position();
+
+        while !self.is_end_of_input() {
+            // check if the next line is part of the block text
+            // start by advancing past the new line
+            let leading_new_line_start = self.position();
+            if self.current_char() == '\r' {
+                self.next_char();
+                if !self.is_end_of_input() && self.current_char() == '\n' {
+                    self.next_char();
+                }
+            } else {
+                debug_assert!(self.current_char() == '\n');
+                self.next_char();
+            }
+
+            let line_start = self.position();
+            let mut leading_spaces = 0;
+            while !self.is_end_of_input() && self.current_char() == ' ' {
+                leading_spaces += 1;
+                self.next_char();
+            }
+
+            let padding = std::cmp::min(required_spaces, leading_spaces);
+
+            if padding < required_spaces
+                && !self.is_end_of_input()
+                && !is_new_line(self.current_char()) {
+                // We didn't reach the required number of spaces, and we're not at the end of the line.
+                // This means "end" already points to the end of the block text.
+                break;
+            }
+
+            // Now we're sure the previous new-line was part of this block text, so let's consume it.
+            self.start_new_line(line_start);
+
+            // if this is not the very first new line, copy the new-line sequence to the string
+            if value.len() > 0 {
+                value.push_str(&self.content_.text()[leading_new_line_start..line_start]);
+            }
+
+            // find the end of this line so we can start over
+            while !self.is_end_of_input() && !is_new_line(self.current_char()) {
+                self.next_char();
+            }
+
+            // add the line's content to the value
+            value.push_str(self.content_slice(line_start + padding, self.position()));
+
+            end = self.position();
+        }
+
+        self.reset_iterator(end);
+        self.new_token(TokenType::BlockText, Some(value))
     }
 
     fn new_token(&mut self, token_type: TokenType, value: Option<String>) -> LexerResult<'a> {
+        debug_assert!(token_type != TokenType::EndOfLine || self.last_token_type_ != TokenType::EndOfLine, "Two EndOfLine tokens in a row");
+
         let text_start = self.text_start_;
-        let text_end = self.ch_iter.position();
+        let text_end = self.position();
         self.last_token_type_ = token_type;
 
         match token_type {
@@ -399,17 +465,43 @@ impl<'a> Lexer<'a> {
     }
 
     fn err_result(&self, message: &str) -> LexerResult<'a> {
-        Err(ParserError::new(self.content_, self.text_start_, message))
+        Err(ParsingError::new(self.content_, self.text_start_, message))
     }
 
-    fn start_new_line(&mut self) {
-        let line_start = self.ch_iter.position();
+    fn start_new_line(&mut self, line_start: usize) {
         self.content_.mark_line(line_start);
         self.line_start_ = line_start;
 
         // create a new iterator so we don't screw up the position of the main iterator
         let remaining = &self.content_.text()[line_start..];
         self.line_spaces_ = remaining.chars().take_while(|&ch| ch == ' ').count();
+    }
+
+    fn reset_iterator(&mut self, position: usize) {
+        if position != self.position() {
+            self.ch_iter_ = self.content_.iter(position);
+            self.next_char();
+        }
+    }
+
+    fn next_char(&mut self) -> Option<char> {
+        self.ch_iter_.next()
+    }
+
+    fn position(&self) -> usize {
+        self.ch_iter_.position()
+    }
+
+    fn current_char(&self) -> char {
+        self.ch_iter_.current_char()
+    }
+
+    fn is_end_of_input(&self) -> bool {
+        self.ch_iter_.is_end_of_input()
+    }
+
+    fn content_slice(&self, start: usize, end: usize) -> &'a str {
+        &self.content_.text()[start..end]
     }
 }
 

@@ -1,5 +1,5 @@
 mod error;
-pub use self::error::ParserError;
+pub use self::error::ParsingError;
 
 mod tokens;
 pub use self::tokens::{Token, TokenType};

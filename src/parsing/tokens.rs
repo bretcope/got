@@ -31,3 +31,20 @@ pub struct Token<'a> {
     pub text_end: usize,
     pub value: Option<String>,
 }
+
+impl<'a> Token<'a> {
+    pub fn trivia(&self) -> &'a str {
+        &self.content.text()[self.trivia_start..self.text_start]
+    }
+
+    pub fn text(&self) -> &'a str {
+        &self.content.text()[self.text_start..self.text_end]
+    }
+
+    pub fn value_or_text(&self) -> &str {
+        match self.value {
+            Some(ref value) => &value,
+            None => self.text(),
+        }
+    }
+}

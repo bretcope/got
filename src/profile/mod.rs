@@ -8,8 +8,8 @@ pub struct Profile {
 }
 
 impl Profile {
-    fn load(filename: &str) -> Result<Profile, Error> {
-        let content = FileContent::load(filename)?;
+    pub fn load(filename: &str) -> Result<Profile, Error> {
+        let _content = FileContent::load(filename)?;
 
         unimplemented!()
     }

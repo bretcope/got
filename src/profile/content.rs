@@ -153,6 +153,7 @@ impl<'a> ContentIterator<'a> {
     }
 
     pub fn current_char(&self) -> char {
+        debug_assert!(!self.is_end_of_input_, "current_char() called on ContentIterator after reaching end of input.");
         self.current_char_
     }
 }
