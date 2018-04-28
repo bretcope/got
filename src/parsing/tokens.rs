@@ -1,4 +1,5 @@
 use profile::FileContent;
+use super::*;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum TokenType {
@@ -46,5 +47,9 @@ impl<'a> Token<'a> {
             Some(ref value) => &value,
             None => self.text(),
         }
+    }
+
+    pub fn as_syntax_element(&'a self) -> SyntaxElement<'a> {
+        SyntaxElement::Token(&self)
     }
 }
