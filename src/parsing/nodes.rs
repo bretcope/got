@@ -29,8 +29,8 @@ pub trait Node<'a>: fmt::Debug {
 
 #[derive(Debug)]
 pub struct File<'a> {
-    property_list_: Box<PropertyList<'a>>,
-    end_of_input_: Box<Token<'a>>
+    pub(super) property_list_: Box<PropertyList<'a>>,
+    pub(super) end_of_input_: Box<Token<'a>>
 }
 
 impl<'a> File<'a> {
@@ -60,7 +60,7 @@ impl<'a> Node<'a> for File<'a> {
 
 #[derive(Debug)]
 pub struct PropertyList<'a> {
-    properties_: Vec<Box<Property<'a>>>,
+    pub(super) properties_: Vec<Box<Property<'a>>>,
 }
 
 impl<'a> PropertyList<'a> {
@@ -91,10 +91,10 @@ impl<'a> Node<'a> for PropertyList<'a> {
 
 #[derive(Debug)]
 pub struct Property<'a> {
-    declaration_: Box<PropertyDeclaration<'a>>,
-    value_: Option<Box<PropertyValue<'a>>>,
-    end_of_line_: Box<Token<'a>>,
-    block_: Option<Box<PropertyBlock<'a>>>,
+    pub(super) declaration_: Box<PropertyDeclaration<'a>>,
+    pub(super) value_: Option<Box<PropertyValue<'a>>>,
+    pub(super) end_of_line_: Box<Token<'a>>,
+    pub(super) block_: Option<Box<PropertyBlock<'a>>>,
 }
 
 impl<'a> Property<'a> {
@@ -144,8 +144,8 @@ impl<'a> Node<'a> for Property<'a> {
 
 #[derive(Debug)]
 pub struct PropertyDeclaration<'a> {
-    type_: Box<Token<'a>>,
-    name_: Option<Box<Token<'a>>>,
+    pub(super) type_: Box<Token<'a>>,
+    pub(super) name_: Option<Box<Token<'a>>>,
 }
 
 impl<'a> PropertyDeclaration<'a> {
@@ -184,8 +184,8 @@ impl<'a> Node<'a> for PropertyDeclaration<'a> {
 
 #[derive(Debug)]
 pub struct PropertyValue<'a> {
-    specifier_: Box<Token<'a>>,
-    text_: Box<Token<'a>>,
+    pub(super) specifier_: Box<Token<'a>>,
+    pub(super) text_: Box<Token<'a>>,
 }
 
 impl<'a> PropertyValue<'a> {
@@ -215,9 +215,9 @@ impl<'a> Node<'a> for PropertyValue<'a> {
 
 #[derive(Debug)]
 pub struct PropertyBlock<'a> {
-    indent_: Box<Token<'a>>,
-    property_list_: Box<PropertyList<'a>>,
-    outdent_: Box<Token<'a>>,
+    pub(super) indent_: Box<Token<'a>>,
+    pub(super) property_list_: Box<PropertyList<'a>>,
+    pub(super) outdent_: Box<Token<'a>>,
 }
 
 impl<'a> PropertyBlock<'a> {

@@ -5,7 +5,7 @@ use super::*;
 pub type LexerResult<'a> = Result<Box<Token<'a>>, ParsingError>;
 
 pub struct Lexer<'a> {
-    content_: &'a profile::FileContent,
+    pub content: &'a profile::FileContent,
     ch_iter_: profile::ContentIterator<'a>,
     trivia_start_: usize,
     text_start_: usize,
@@ -22,7 +22,7 @@ impl<'a> Lexer<'a> {
 
     pub fn new(content: &'a profile::FileContent) -> Lexer<'a> {
         let mut lexer = Lexer {
-            content_: content,
+            content,
             ch_iter_: content.iter(0),
             text_start_: 0,
             trivia_start_: 0,
@@ -86,9 +86,9 @@ impl<'a> Lexer<'a> {
                 if self.text_start_ != self.line_start_ + self.line_spaces_ {
                     // the whitespace consumed at the start of the line doesn't match the number of spaces at the start of the line, which means there might be
                     // a tab character.
-                    for (i, wc) in self.content_.text()[self.line_start_..self.text_start_].char_indices() {
+                    for (i, wc) in self.content.text()[self.line_start_..self.text_start_].char_indices() {
                         if wc == '\t' {
-                            return Err(ParsingError::new(self.content_, self.line_start_ + i, "Tab character used for indentation. Four spaces must be used for indentation."))
+                            return Err(ParsingError::new(self.content, self.line_start_ + i, "Tab character used for indentation. Four spaces must be used for indentation."))
                         }
                     }
                 }
@@ -175,7 +175,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn lex_end_of_input(&mut self) -> LexerResult<'a> {
-        debug_assert_eq!(self.text_start_, self.content_.text().len());
+        debug_assert_eq!(self.text_start_, self.content.text().len());
 
         match self.last_token_type_ {
             TokenType::GreaterThan => self.lex_block_text(),
@@ -234,7 +234,7 @@ impl<'a> Lexer<'a> {
             self.next_char();
         }
 
-        let value = String::from(&self.content_.text()[self.text_start_..self.position()]);
+        let value = String::from(&self.content.text()[self.text_start_..self.position()]);
         self.new_token(TokenType::Word, Some(value))
     }
 
@@ -262,7 +262,7 @@ impl<'a> Lexer<'a> {
 
         let start = self.text_start_;
         let end = self.position() - trailing_spaces;
-        let value = String::from(&self.content_.text()[start..end]);
+        let value = String::from(&self.content.text()[start..end]);
 
         if trailing_spaces > 0 {
             // reset the iterator back to the "end" position because we'd prefer for the trailing
@@ -294,7 +294,7 @@ impl<'a> Lexer<'a> {
             // copy any literal text that we can
             let pos = self.position();
             if pos > copyable_start {
-                value.push_str(&self.content_.text()[copyable_start..pos]);
+                value.push_str(&self.content.text()[copyable_start..pos]);
             }
 
             if ch == '"' {
@@ -367,7 +367,7 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        Err(ParsingError::new(self.content_, esc_pos, "Invalid escape sequence."))
+        Err(ParsingError::new(self.content, esc_pos, "Invalid escape sequence."))
     }
 
     fn lex_block_text(&mut self) -> LexerResult<'a> {
@@ -413,7 +413,7 @@ impl<'a> Lexer<'a> {
 
             // if this is not the very first new line, copy the new-line sequence to the string
             if value.len() > 0 {
-                value.push_str(&self.content_.text()[leading_new_line_start..line_start]);
+                value.push_str(&self.content.text()[leading_new_line_start..line_start]);
             }
 
             // find the end of this line so we can start over
@@ -456,7 +456,7 @@ impl<'a> Lexer<'a> {
 
         Ok(Box::new(Token {
             token_type,
-            content: self.content_,
+            content: self.content,
             trivia_start: self.trivia_start_,
             text_start,
             text_end,
@@ -465,21 +465,21 @@ impl<'a> Lexer<'a> {
     }
 
     fn err_result(&self, message: &str) -> LexerResult<'a> {
-        Err(ParsingError::new(self.content_, self.text_start_, message))
+        Err(ParsingError::new(self.content, self.text_start_, message))
     }
 
     fn start_new_line(&mut self, line_start: usize) {
-        self.content_.mark_line(line_start);
+        self.content.mark_line(line_start);
         self.line_start_ = line_start;
 
         // create a new iterator so we don't screw up the position of the main iterator
-        let remaining = &self.content_.text()[line_start..];
+        let remaining = &self.content.text()[line_start..];
         self.line_spaces_ = remaining.chars().take_while(|&ch| ch == ' ').count();
     }
 
     fn reset_iterator(&mut self, position: usize) {
         if position != self.position() {
-            self.ch_iter_ = self.content_.iter(position);
+            self.ch_iter_ = self.content.iter(position);
             self.next_char();
         }
     }
@@ -501,7 +501,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn content_slice(&self, start: usize, end: usize) -> &'a str {
-        &self.content_.text()[start..end]
+        &self.content.text()[start..end]
     }
 }
 
