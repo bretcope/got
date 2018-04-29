@@ -1,5 +1,6 @@
 use super::*;
 use std::fmt;
+use colors::*;
 
 #[derive(Debug)]
 pub enum NodeType<'a> {
@@ -11,7 +12,7 @@ pub enum NodeType<'a> {
     PropertyBlock(&'a PropertyBlock<'a>),
 }
 
-pub trait Node<'a>: fmt::Debug {
+pub trait Node<'a>: fmt::Debug + fmt::Display {
     fn node_type(&self) -> NodeType;
 
     fn as_node(&self) -> &Node<'a>;
@@ -21,13 +22,22 @@ pub trait Node<'a>: fmt::Debug {
     }
 
     fn syntax_elements(&'a self, list: &mut Vec<SyntaxElement<'a>>);
+
+    fn print(&self, f: &mut fmt::Formatter, indent_level: usize) -> fmt::Result;
+}
+
+fn format_indent(level: usize) -> String {
+    format!("{}{}{}", GREY, "|   ".repeat(level), RESET)
+}
+
+fn format_node_type(indent_level: usize, type_name: &str) -> String {
+    format!("{}{}{}{}", format_indent(indent_level), CYAN, type_name, RESET)
 }
 
 // =================================================================================================
 // File
 // =================================================================================================
 
-#[derive(Debug)]
 pub struct File<'a> {
     pub(super) property_list_: Box<PropertyList<'a>>,
     pub(super) end_of_input_: Box<Token<'a>>
@@ -52,13 +62,29 @@ impl<'a> Node<'a> for File<'a> {
         list.push(self.property_list_.as_syntax_element());
         list.push(SyntaxElement::Token(&self.end_of_input_));
     }
+
+    fn print(&self, f: &mut fmt::Formatter, indent_level: usize) -> fmt::Result {
+        writeln!(f, "{} {}", format_node_type(indent_level, "File:"), self.end_of_input_.content.filename())?;
+        self.property_list_.print(f, indent_level + 1)
+    }
+}
+
+impl<'a> fmt::Debug for File<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.print(f, 0)
+    }
+}
+
+impl<'a> fmt::Display for File<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.print(f, 0)
+    }
 }
 
 // =================================================================================================
 // PropertyList
 // =================================================================================================
 
-#[derive(Debug)]
 pub struct PropertyList<'a> {
     pub(super) properties_: Vec<Box<Property<'a>>>,
 }
@@ -83,13 +109,34 @@ impl<'a> Node<'a> for PropertyList<'a> {
             list.push(prop.as_syntax_element());
         }
     }
+
+    fn print(&self, f: &mut fmt::Formatter, indent_level: usize) -> fmt::Result {
+        let prop_count = self.properties_.len();
+        writeln!(f, "{} (count: {})", format_node_type(indent_level, "PropertyList"), prop_count)?;
+        for prop in &self.properties_ {
+            prop.print(f, indent_level + 1)?;
+        }
+
+        Ok(())
+    }
+}
+
+impl<'a> fmt::Debug for PropertyList<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.print(f, 0)
+    }
+}
+
+impl<'a> fmt::Display for PropertyList<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.print(f, 0)
+    }
 }
 
 // =================================================================================================
 // Property
 // =================================================================================================
 
-#[derive(Debug)]
 pub struct Property<'a> {
     pub(super) declaration_: Box<PropertyDeclaration<'a>>,
     pub(super) value_: Option<Box<PropertyValue<'a>>>,
@@ -136,13 +183,39 @@ impl<'a> Node<'a> for Property<'a> {
             list.push(block.as_syntax_element());
         }
     }
+
+    fn print(&self, f: &mut fmt::Formatter, indent_level: usize) -> fmt::Result {
+        writeln!(f, "{}", format_node_type(indent_level, "Property"))?;
+        self.declaration_.print(f, indent_level + 1)?;
+
+        if let Some(value) = self.value() {
+            value.print(f, indent_level + 1)?;
+        }
+
+        if let Some(block) = self.block() {
+            block.print(f, indent_level + 1)?;
+        }
+
+        Ok(())
+    }
+}
+
+impl<'a> fmt::Debug for Property<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.print(f, 0)
+    }
+}
+
+impl<'a> fmt::Display for Property<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.print(f, 0)
+    }
 }
 
 // =================================================================================================
 // PropertyDeclaration
 // =================================================================================================
 
-#[derive(Debug)]
 pub struct PropertyDeclaration<'a> {
     pub(super) type_: Box<Token<'a>>,
     pub(super) name_: Option<Box<Token<'a>>>,
@@ -176,13 +249,34 @@ impl<'a> Node<'a> for PropertyDeclaration<'a> {
             list.push(name.as_syntax_element());
         }
     }
+
+    fn print(&self, f: &mut fmt::Formatter, indent_level: usize) -> fmt::Result {
+        let prop_type = self.property_type();
+        let name = match self.property_name() {
+            Some(name) => format!(" \"{}\"", name),
+            None => String::new(),
+        };
+
+        writeln!(f, "{} {}{}", format_node_type(indent_level, "Declaration:"), prop_type, name)
+    }
+}
+
+impl<'a> fmt::Debug for PropertyDeclaration<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.print(f, 0)
+    }
+}
+
+impl<'a> fmt::Display for PropertyDeclaration<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.print(f, 0)
+    }
 }
 
 // =================================================================================================
 // PropertyValue
 // =================================================================================================
 
-#[derive(Debug)]
 pub struct PropertyValue<'a> {
     pub(super) specifier_: Box<Token<'a>>,
     pub(super) text_: Box<Token<'a>>,
@@ -207,13 +301,28 @@ impl<'a> Node<'a> for PropertyValue<'a> {
         list.push(self.specifier_.as_syntax_element());
         list.push(self.text_.as_syntax_element());
     }
+
+    fn print(&self, f: &mut fmt::Formatter, indent_level: usize) -> fmt::Result {
+        writeln!(f, "{} \"{}\"", format_node_type(indent_level, "Value:"), self.value())
+    }
+}
+
+impl<'a> fmt::Debug for PropertyValue<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.print(f, 0)
+    }
+}
+
+impl<'a> fmt::Display for PropertyValue<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.print(f, 0)
+    }
 }
 
 // =================================================================================================
 // PropertyBlock
 // =================================================================================================
 
-#[derive(Debug)]
 pub struct PropertyBlock<'a> {
     pub(super) indent_: Box<Token<'a>>,
     pub(super) property_list_: Box<PropertyList<'a>>,
@@ -239,5 +348,22 @@ impl<'a> Node<'a> for PropertyBlock<'a> {
         list.push(self.indent_.as_syntax_element());
         list.push(self.property_list_.as_syntax_element());
         list.push(self.outdent_.as_syntax_element());
+    }
+
+    fn print(&self, f: &mut fmt::Formatter, indent_level: usize) -> fmt::Result {
+        writeln!(f, "{}", format_node_type(indent_level, "Block"))?;
+        self.property_list_.print(f, indent_level + 1)
+    }
+}
+
+impl<'a> fmt::Debug for PropertyBlock<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.print(f, 0)
+    }
+}
+
+impl<'a> fmt::Display for PropertyBlock<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.print(f, 0)
     }
 }
