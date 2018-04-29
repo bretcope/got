@@ -1,5 +1,7 @@
+use std::fmt;
 use profile::FileContent;
 use super::*;
+use colors::*;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum TokenType {
@@ -23,7 +25,6 @@ pub enum TokenType {
     GreaterThan,
 }
 
-#[derive(Debug)]
 pub struct Token<'a> {
     pub token_type: TokenType,
     pub content: &'a FileContent,
@@ -58,5 +59,24 @@ impl<'a> Token<'a> {
 
     pub fn as_syntax_element(&'a self) -> SyntaxElement<'a> {
         SyntaxElement::Token(&self)
+    }
+}
+
+impl<'a> fmt::Display for Token<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let pos = self.content.position_details(self.text_start);
+        write!(f, "{}{:?} {}{}:{}{}", CYAN, self.token_type, GREY, pos.line_number, pos.column, RESET)?;
+
+        if let &Some(ref value) = &self.value {
+            write!(f, " \"{}\"", value)?;
+        }
+
+        writeln!(f)
+    }
+}
+
+impl<'a> fmt::Debug for Token<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(&self, f)
     }
 }

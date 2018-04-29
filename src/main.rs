@@ -13,27 +13,39 @@ use std::process;
 fn main() {
     enable_console_colors();
 
-    let content = match profile::FileContent::load("sample_profile") {
+//    _debug_lexer("sample_profile");
+    _debug_parser("sample_profile");
+}
+
+fn _debug_lexer(filename: &str) {
+    let content = match profile::FileContent::load(filename) {
         Ok(content) => content,
         Err(err) => panic!("{}", err),
     };
 
-//    let mut lexer = parsing::Lexer::new(&content);
-//    loop
-//    {
-//        match lexer.advance() {
-//            Ok(token) => {
-//                println!("{:?} {}", token.token_type, match token.value { Some(ref value) => format!("\"{}\"", value), None => String::new() });
-//                if token.token_type == parsing::TokenType::EndOfInput {
-//                    break;
-//                }
-//            },
-//            Err(err) => {
-//                println!("{}", err);
-//                process::exit(1);
-//            }
-//        };
-//    }
+    let mut lexer = parsing::Lexer::new(&content);
+    loop
+    {
+        match lexer.advance() {
+            Ok(token) => {
+                print!("{}", token);
+                if token.token_type == parsing::TokenType::EndOfInput {
+                    break;
+                }
+            },
+            Err(err) => {
+                println!("{}", err);
+                process::exit(1);
+            }
+        };
+    }
+}
+
+fn _debug_parser(filename: &str) {
+    let content = match profile::FileContent::load(filename) {
+        Ok(content) => content,
+        Err(err) => panic!("{}", err),
+    };
 
     let file_node = match parsing::parse_configuration_file(&content) {
         Ok(node) => node,
@@ -43,7 +55,7 @@ fn main() {
         },
     };
 
-    println!("{:?}", file_node);
+    print!("{:?}", file_node);
 }
 
 fn enable_console_colors() {
