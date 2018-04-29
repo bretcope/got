@@ -121,7 +121,7 @@ impl<'a> Lexer<'a> {
                 } else if is_alpha(self.current_char()) {
                     self.lex_word()
                 } else {
-                    self.err_result("Unexpected character.")
+                    self.err_result(&format!("Unexpected character `{}`.", self.current_char()))
                 }
             }
         }
@@ -367,7 +367,8 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        Err(ParsingError::new(self.content, esc_pos, "Invalid escape sequence."))
+        let message = format!("Invalid escape sequence `{}`.", &self.content.text()[esc_pos..self.position()]);
+        Err(ParsingError::new(self.content, esc_pos, &message))
     }
 
     fn lex_block_text(&mut self) -> LexerResult<'a> {
