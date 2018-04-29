@@ -42,6 +42,13 @@ impl<'a> Token<'a> {
         &self.content.text()[self.text_start..self.text_end]
     }
 
+    pub fn value_or_panic(&self, message: &str) -> &str {
+        match &self.value {
+            &Some(ref value) => value,
+            &None => panic!(String::from(message)),
+        }
+    }
+
     pub fn value_or_text(&self) -> &str {
         match self.value {
             Some(ref value) => &value,
