@@ -1,3 +1,5 @@
+pub mod nodes;
+
 use super::*;
 use profile::FileContent;
 

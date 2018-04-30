@@ -7,8 +7,6 @@ pub use self::tokens::{Token, TokenType};
 mod lexer;
 pub use self::lexer::*; // todo: don't really need to expose this long-term
 
-pub mod nodes;
-
 mod parser;
 pub use self::parser::*;
 
