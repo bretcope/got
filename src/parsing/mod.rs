@@ -10,7 +10,10 @@ pub use self::lexer::*; // todo: don't really need to expose this long-term
 mod parser;
 pub use self::parser::*;
 
-#[derive(Debug)]
+pub mod ir;
+pub mod keywords;
+
+#[derive(Debug, Copy, Clone)]
 pub enum SyntaxElement<'a> {
     Token(&'a Token<'a>),
     Node(&'a nodes::Node<'a>),

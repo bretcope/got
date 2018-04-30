@@ -1,0 +1,17 @@
+pub const ALIAS: &str = "alias";
+pub const CONFIG: &str = "config";
+pub const DEFAULT: &str = "default";
+pub const ENV: &str = "env";
+pub const FILE: &str = "file";
+pub const INCLUDE: &str = "include";
+pub const OVERRIDE: &str = "override";
+pub const MERGE: &str = "merge";
+pub const NONE: &str = "none";
+pub const PATH: &str = "path";
+pub const PREFIX: &str = "prefix";
+pub const PROFILE: &str = "profile";
+pub const REMOTE: &str = "remote";
+pub const RENAME: &str = "rename";
+pub const REPLACE: &str = "replace";
+pub const REPO: &str = "repo";
+pub const RESOURCE: &str = "resource";

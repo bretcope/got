@@ -23,6 +23,22 @@ pub trait Node<'a>: fmt::Debug + fmt::Display {
 
     fn syntax_elements(&'a self, list: &mut Vec<SyntaxElement<'a>>);
 
+    fn content_position(&'a self) -> (&'a FileContent, usize) {
+        let mut list = Vec::new();
+        let mut element = self.as_syntax_element();
+        while let SyntaxElement::Node(node) = element {
+            list.clear();
+            node.syntax_elements(&mut list);
+            element = list[0];
+        }
+
+        if let SyntaxElement::Token(token) = element {
+            return (token.content, token.text_start);
+        }
+
+        panic!("Could not find token for node: {}", self)
+    }
+
     fn print(&self, f: &mut fmt::Formatter, indent_level: usize) -> fmt::Result;
 }
 
@@ -149,10 +165,32 @@ impl<'a> Property<'a> {
         &self.declaration_
     }
 
+    pub fn property_type(&self) -> &str {
+        self.declaration().property_type()
+    }
+
+    pub fn property_name(&self) -> Option<&str> {
+        self.declaration().property_name()
+    }
+
+    pub fn has_value(&self) -> bool {
+        match &self.value_ {
+            &Some(_) => true,
+            &None => false,
+        }
+    }
+
     pub fn value(&'a self) -> Option<&'a PropertyValue<'a>> {
         match &self.value_ {
             &Some(ref value) => Some(value),
             &None => None,
+        }
+    }
+
+    pub fn has_block(&self) -> bool {
+        match &self.block_ {
+            &Some(_) => true,
+            &None => false,
         }
     }
 
@@ -230,6 +268,13 @@ impl<'a> PropertyDeclaration<'a> {
         match &self.name_ {
             &Some(ref token) => Some(token.value_or_panic("`name_` token in PropertyDeclaration does not have a value.")),
             &None => None,
+        }
+    }
+
+    pub fn has_name(&self) -> bool {
+        match &self.name_ {
+            &Some(_) => true,
+            &None => false,
         }
     }
 }
