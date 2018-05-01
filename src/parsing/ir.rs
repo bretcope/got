@@ -111,7 +111,7 @@ fn validate_header<'a>(prop: &'a nodes::Property<'a>, file_type: FileType) -> Em
         FileType::Resource => {
             if prop_type != keywords::RESOURCE {
                 let (content, position) = prop.content_position();
-                let message = format!("Resource files included by your profile byst me declared with the \"{}\" property at the beginning of the file.", keywords::RESOURCE);
+                let message = format!("Resource files included by your profile must be declared with the \"{}\" property at the beginning of the resource file.", keywords::RESOURCE);
                 return Err(ParsingError::new(content, position, &message));
             }
         },
