@@ -88,7 +88,8 @@ impl<'a> Lexer<'a> {
                     // a tab character.
                     for (i, wc) in self.content.text()[self.line_start_..self.text_start_].char_indices() {
                         if wc == '\t' {
-                            return Err(ParsingError::new(self.content, self.line_start_ + i, "Tab character used for indentation. Four spaces must be used for indentation."))
+                            let message = String::from("Tab character used for indentation. Four spaces must be used for indentation.");
+                            return Err(ParsingError::new(self.content, self.line_start_ + i, message));
                         }
                     }
                 }
@@ -121,7 +122,7 @@ impl<'a> Lexer<'a> {
                 } else if is_alpha(self.current_char()) {
                     self.lex_word()
                 } else {
-                    self.err_result(&format!("Unexpected character `{}`.", self.current_char()))
+                    self.err_result(format!("Unexpected character `{}`.", self.current_char()))
                 }
             }
         }
@@ -208,7 +209,8 @@ impl<'a> Lexer<'a> {
             return self.new_token(TokenType::Indent, None);
         }
 
-        self.err_result("Misaligned indentation. Indents must be multiples of four spaces.")
+        let message = String::from("Misaligned indentation. Indents must be multiples of four spaces.");
+        self.err_result(message)
     }
 
     fn lex_end_of_line(&mut self) -> LexerResult<'a> {
@@ -308,7 +310,7 @@ impl<'a> Lexer<'a> {
             copyable_start = self.position();
         }
 
-        self.err_result("Unterminated quoted-string.")
+        self.err_result(String::from("Unterminated quoted-string."))
     }
 
     fn parse_escape_sequence(&mut self) -> Result<char, ParsingError> {
@@ -368,7 +370,7 @@ impl<'a> Lexer<'a> {
         }
 
         let message = format!("Invalid escape sequence `{}`.", &self.content.text()[esc_pos..self.position()]);
-        Err(ParsingError::new(self.content, esc_pos, &message))
+        Err(ParsingError::new(self.content, esc_pos, message))
     }
 
     fn lex_block_text(&mut self) -> LexerResult<'a> {
@@ -465,7 +467,7 @@ impl<'a> Lexer<'a> {
         }))
     }
 
-    fn err_result(&self, message: &str) -> LexerResult<'a> {
+    fn err_result(&self, message: String) -> LexerResult<'a> {
         Err(ParsingError::new(self.content, self.text_start_, message))
     }
 

@@ -12,7 +12,7 @@ pub struct ParsingError {
 }
 
 impl ParsingError {
-    pub fn new(content: &profile::FileContent, position: usize, message: &str) -> ParsingError {
+    pub fn new(content: &profile::FileContent, position: usize, message: String) -> ParsingError {
         let pos_details = content.position_details(position);
 
         let display_text = format!("Error: {}\n    at \"{}\" {}:{}\n",
@@ -24,7 +24,7 @@ impl ParsingError {
 
         ParsingError {
             display_text,
-            message: String::from(message),
+            message,
             filename: String::from(content.filename()),
             line_number: pos_details.line_number,
             column: pos_details.column,

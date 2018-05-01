@@ -180,5 +180,5 @@ fn unexpected_token<'a>(lexer: &mut Lexer<'a>, expected_types: &[TokenType]) -> 
                           &expected_str[1..expected_str.len()-1] // remove brackets
     );
 
-    ParsingError::new(lexer.content, token.text_start, &message)
+    ParsingError::new(lexer.content, token.text_start, message)
 }

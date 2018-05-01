@@ -81,7 +81,7 @@ impl<'a> File<'a> {
                 _ => {
                     let (content, position) = prop.content_position();
                     let message = format!("Unknown property \"{}\"", prop_type);
-                    return Err(ParsingError::new(content, position, &message));
+                    return Err(ParsingError::new(content, position, message));
                 },
             }
         }
@@ -105,14 +105,14 @@ fn validate_header<'a>(prop: &'a nodes::Property<'a>, file_type: FileType) -> Em
             if prop_type != keywords::PROFILE {
                 let (content, position) = prop.content_position();
                 let message = format!("Your main MOT profile needs to be declared with the \"{}\" property at the beginning of the file.", keywords::PROFILE);
-                return Err(ParsingError::new(content, position, &message));
+                return Err(ParsingError::new(content, position, message));
             }
         },
         FileType::Resource => {
             if prop_type != keywords::RESOURCE {
                 let (content, position) = prop.content_position();
                 let message = format!("Resource files included by your profile must be declared with the \"{}\" property at the beginning of the resource file.", keywords::RESOURCE);
-                return Err(ParsingError::new(content, position, &message));
+                return Err(ParsingError::new(content, position, message));
             }
         },
     };
@@ -120,13 +120,13 @@ fn validate_header<'a>(prop: &'a nodes::Property<'a>, file_type: FileType) -> Em
     if let Some(value) = prop.value() {
         let (content, position) = value.content_position();
         let message = format!("\"{}\" property cannot have a value.", prop_type);
-        return Err(ParsingError::new(content, position, &message));
+        return Err(ParsingError::new(content, position, message));
     }
 
     if let Some(block) = prop.block() {
         let (content, position) = block.content_position();
         let message = format!("\"{}\" property cannot have child properties.", prop_type);
-        return Err(ParsingError::new(content, position, &message));
+        return Err(ParsingError::new(content, position, message));
     }
 
     Ok(())
