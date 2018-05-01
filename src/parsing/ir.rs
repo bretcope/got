@@ -79,9 +79,8 @@ impl<'a> File<'a> {
                 keywords::INCLUDE => add_include(prop, &mut includes_)?,
                 keywords::ALIAS => add_alias(prop, &mut alias_by_name_)?,
                 _ => {
-                    let (content, position) = prop.content_position();
-                    let message = format!("Unknown property \"{}\"", prop_type);
-                    return Err(ParsingError::new(content, position, message));
+                    err_result(prop, format!("Unknown property \"{}\"", prop_type))?;
+                    panic!("MOT Bug: err_result did not return an error.");
                 },
             }
         }
@@ -103,30 +102,26 @@ fn validate_header<'a>(prop: &'a nodes::Property<'a>, file_type: FileType) -> Em
     match file_type {
         FileType::Profile => {
             if prop_type != keywords::PROFILE {
-                let (content, position) = prop.content_position();
                 let message = format!("Your main MOT profile needs to be declared with the \"{}\" property at the beginning of the file.", keywords::PROFILE);
-                return Err(ParsingError::new(content, position, message));
+                return err_result(prop, message);
             }
         },
         FileType::Resource => {
             if prop_type != keywords::RESOURCE {
-                let (content, position) = prop.content_position();
                 let message = format!("Resource files included by your profile must be declared with the \"{}\" property at the beginning of the resource file.", keywords::RESOURCE);
-                return Err(ParsingError::new(content, position, message));
+                return err_result(prop, message);
             }
         },
     };
 
     if let Some(value) = prop.value() {
-        let (content, position) = value.content_position();
         let message = format!("\"{}\" property cannot have a value.", prop_type);
-        return Err(ParsingError::new(content, position, message));
+        return err_result(value, message);
     }
 
     if let Some(block) = prop.block() {
-        let (content, position) = block.content_position();
         let message = format!("\"{}\" property cannot have child properties.", prop_type);
-        return Err(ParsingError::new(content, position, message));
+        return err_result(block, message);
     }
 
     Ok(())
@@ -146,4 +141,9 @@ fn add_prefix<'a>(prop: &'a nodes::Property<'a>, by_name: &mut HashMap<String, P
 
 fn add_repo<'a>(prop: &'a nodes::Property<'a>, by_name: &mut HashMap<String, Repo<'a>>) -> EmptyResult {
     unimplemented!()
+}
+
+fn err_result<'a>(node: &'a nodes::Node<'a>, message: String) -> EmptyResult {
+    let (content, position) = node.content_position();
+    Err(ParsingError::new(content, position, message))
 }
