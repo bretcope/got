@@ -2,7 +2,7 @@ use std;
 use profile;
 use super::*;
 
-pub type LexerResult<'a> = Result<Box<Token<'a>>, ParsingError>;
+pub type LexerResult<'a> = ParsingBoxResult<Token<'a>>;
 
 pub struct Lexer<'a> {
     pub content: &'a profile::FileContent,
@@ -314,7 +314,7 @@ impl<'a> Lexer<'a> {
         self.err_result(String::from("Unterminated quoted-string."))
     }
 
-    fn parse_escape_sequence(&mut self) -> Result<char, ParsingError> {
+    fn parse_escape_sequence(&mut self) -> ParsingResult<char> {
         debug_assert_eq!(self.current_char(), '\\');
 
         let esc_pos = self.position();

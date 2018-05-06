@@ -3,9 +3,7 @@ pub mod nodes;
 use super::*;
 use profile::FileContent;
 
-pub type ParserResult<T> = Result<Box<T>, ParsingError>;
-
-pub fn parse_configuration_file<'a>(content: &'a FileContent) -> ParserResult<nodes::File<'a>> {
+pub fn parse_configuration_file<'a>(content: &'a FileContent) -> ParsingBoxResult<nodes::File<'a>> {
     let mut lexer = Lexer::new(content);
     parse_file(&mut lexer)
 }
@@ -14,7 +12,7 @@ pub fn parse_configuration_file<'a>(content: &'a FileContent) -> ParserResult<no
 File
     PropertyList endOfInput
  */
-fn parse_file<'a>(lexer: &mut Lexer<'a>) -> ParserResult<nodes::File<'a>> {
+fn parse_file<'a>(lexer: &mut Lexer<'a>) -> ParsingBoxResult<nodes::File<'a>> {
     let prop_list = parse_property_list(lexer)?;
     let end_of_input = require_token(lexer, TokenType::EndOfInput)?;
 
@@ -29,7 +27,7 @@ PropertyList
     Property PropertyList
     Property
  */
-fn parse_property_list<'a>(lexer: &mut Lexer<'a>) -> ParserResult<nodes::PropertyList<'a>> {
+fn parse_property_list<'a>(lexer: &mut Lexer<'a>) -> ParsingBoxResult<nodes::PropertyList<'a>> {
     let mut properties = Vec::new();
     loop {
         let prop = parse_property(lexer)?;
@@ -50,7 +48,7 @@ Property
     PropertyDeclaration PropertyValue endOfLine
     PropertyDeclaration endOfLine PropertyBlock_opt
  */
-fn parse_property<'a>(lexer: &mut Lexer<'a>) -> ParserResult<nodes::Property<'a>> {
+fn parse_property<'a>(lexer: &mut Lexer<'a>) -> ParsingBoxResult<nodes::Property<'a>> {
     let declaration = parse_property_declaration(lexer)?;
 
     if lexer.peek_type() == TokenType::EndOfLine {
@@ -94,7 +92,7 @@ PropertyDeclaration
     word quotedText
     word
  */
-fn parse_property_declaration<'a>(lexer: &mut Lexer<'a>) -> ParserResult<nodes::PropertyDeclaration<'a>> {
+fn parse_property_declaration<'a>(lexer: &mut Lexer<'a>) -> ParsingBoxResult<nodes::PropertyDeclaration<'a>> {
     let prop_type = require_token(lexer, TokenType::Word)?;
     let peek = lexer.peek_type();
     if peek == TokenType::Word || peek == TokenType::QuotedText {
@@ -117,7 +115,7 @@ PropertyValue
     : lineText
     > blockText
  */
-fn parse_property_value<'a>(lexer: &mut Lexer<'a>) -> ParserResult<nodes::PropertyValue<'a>> {
+fn parse_property_value<'a>(lexer: &mut Lexer<'a>) -> ParsingBoxResult<nodes::PropertyValue<'a>> {
     match lexer.peek_type() {
         TokenType::Colon => {
             let colon = lexer.advance()?;
@@ -149,7 +147,7 @@ fn parse_property_value<'a>(lexer: &mut Lexer<'a>) -> ParserResult<nodes::Proper
 PropertyBlock
     indent PropertyList outdent
  */
-fn parse_property_block<'a>(lexer: &mut Lexer<'a>) -> ParserResult<nodes::PropertyBlock<'a>> {
+fn parse_property_block<'a>(lexer: &mut Lexer<'a>) -> ParsingBoxResult<nodes::PropertyBlock<'a>> {
     let indent = require_token(lexer, TokenType::Indent)?;
     let prop_list = parse_property_list(lexer)?;
     let outdent = require_token(lexer, TokenType::Outdent)?;
@@ -160,7 +158,7 @@ fn parse_property_block<'a>(lexer: &mut Lexer<'a>) -> ParserResult<nodes::Proper
     }))
 }
 
-fn require_token<'a>(lexer: &mut Lexer<'a>, token_type: TokenType) -> ParserResult<Token<'a>> {
+fn require_token<'a>(lexer: &mut Lexer<'a>, token_type: TokenType) -> ParsingBoxResult<Token<'a>> {
     if lexer.peek_type() == token_type {
         return lexer.advance();
     }

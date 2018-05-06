@@ -20,3 +20,7 @@ pub enum SyntaxElement<'a> {
     Token(&'a Token<'a>),
     Node(&'a nodes::Node<'a>),
 }
+
+pub type ParsingResult<T> = std::result::Result<T, ParsingError>;
+pub type ParsingBoxResult<T> = ParsingResult<Box<T>>;
+pub type EmptyResult = ParsingResult<()>;
