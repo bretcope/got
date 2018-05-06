@@ -1,6 +1,6 @@
 
 pub fn str_normalize(s: &str) -> String {
-    s.to_lowercase()
+    s.trim().to_lowercase()
 }
 
 pub fn str_is_whitespace(s: &str) -> bool {

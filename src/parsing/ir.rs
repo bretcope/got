@@ -35,7 +35,9 @@ pub struct File<'a> {
 
 #[derive(Debug)]
 pub struct Alias<'a> {
-    _a: &'a str,
+    property_node_: &'a nodes::Property<'a>,
+    name_: &'a str,
+    value_: &'a str,
 }
 
 #[derive(Debug)]
@@ -135,9 +137,52 @@ fn validate_header<'a>(prop: &'a nodes::Property<'a>, file_type: FileType) -> Em
     Ok(())
 }
 
-fn add_alias<'a>(prop: &'a nodes::Property<'a>, _by_name: &mut HashMap<String, Alias<'a>>) -> EmptyResult {
+fn add_alias<'a>(prop: &'a nodes::Property<'a>, by_name: &mut HashMap<String, Alias<'a>>) -> EmptyResult {
     debug_assert_eq!(prop.property_type(), keywords::ALIAS);
-    unimplemented!()
+
+    let alias_name = match prop.property_name() {
+        Some(n) => n,
+        None => "",
+    };
+
+    let alias_normalized = str_normalize(alias_name);
+    if alias_normalized.is_empty() {
+        return err_result(prop, format!(
+            "\"{}\" property must have a non-empty name associated with it.",
+            keywords::ALIAS,
+        ));
+    }
+
+    if let Some(existing) = by_name.get(&alias_normalized) {
+        let orig_at = ParsingError::fmt_position_line(&existing.property_node_.position_details());
+        return err_result(prop, format!(
+            "Duplicate {} \"{}\".\n{}",
+            keywords::ALIAS,
+            alias_name,
+            orig_at,
+        ));
+    }
+
+    if let Some(_block) = prop.block() {
+        return err_result(prop, format!("\"{}\" property cannot have child properties.", keywords::ALIAS));
+    }
+
+    let value = match prop.value_str() {
+        Some(v) => v,
+        None => return err_result(prop, format!(
+            "Value of {} \"{}\" is missing.",
+            keywords::ALIAS,
+            alias_name,
+        )),
+    };
+
+    by_name.insert(alias_normalized, Alias {
+        property_node_: prop,
+        name_: alias_name,
+        value_: value,
+    });
+
+    Ok(())
 }
 
 fn add_include<'a>(prop: &'a nodes::Property<'a>, _includes: &mut Vec<Include<'a>>) -> EmptyResult {
@@ -150,15 +195,16 @@ fn add_prefix<'a>(prop: &'a nodes::Property<'a>, by_name: &mut HashMap<String, P
 
     let prefix_name = match prop.property_name() {
         Some(n) => n,
-        None => {
-            return err_result(prop, format!(
-                "\"{}\" property must have a name associated with it.",
-                keywords::PREFIX,
-            ));
-        }
+        None => ""
     };
 
     let prefix_normalized = str_normalize(prefix_name);
+    if prefix_normalized.is_empty() {
+        return err_result(prop, format!(
+            "\"{}\" property must have a non-empty name associated with it.",
+            keywords::PREFIX,
+        ));
+    }
 
     if let Some(existing) = by_name.get(&prefix_normalized) {
         let orig_at = ParsingError::fmt_position_line(&existing.property_node_.position_details());
