@@ -108,26 +108,28 @@ fn validate_header<'a>(prop: &'a nodes::Property<'a>, file_type: FileType) -> Em
     match file_type {
         FileType::Profile => {
             if prop_type != keywords::PROFILE {
-                let e = format!("Your main MOT profile needs to be declared with the \"{}\" property at the beginning of the file.", keywords::PROFILE);
-                return err_result(prop, e);
+                return err_result(prop, format!(
+                    "Your main MOT profile needs to be declared with the \"{}\" property at the beginning of the file.",
+                    keywords::PROFILE,
+                ));
             }
         },
         FileType::Resource => {
             if prop_type != keywords::RESOURCE {
-                let e = format!("Resource files included by your profile must be declared with the \"{}\" property at the beginning of the resource file.", keywords::RESOURCE);
-                return err_result(prop, e);
+                return err_result(prop, format!(
+                    "Resource files included by your profile must be declared with the \"{}\" property at the beginning of the resource file.",
+                    keywords::RESOURCE,
+                ));
             }
         },
     };
 
     if let Some(value) = prop.value_node() {
-        let e = format!("\"{}\" property cannot have a value.", prop_type);
-        return err_result(value, e);
+        return err_result(value, format!("\"{}\" property cannot have a value.", prop_type));
     }
 
     if let Some(block) = prop.block() {
-        let e = format!("\"{}\" property cannot have child properties.", prop_type);
-        return err_result(block, e);
+        return err_result(block, format!("\"{}\" property cannot have child properties.", prop_type));
     }
 
     Ok(())
@@ -149,8 +151,10 @@ fn add_prefix<'a>(prop: &'a nodes::Property<'a>, by_name: &mut HashMap<String, P
     let prefix_name = match prop.property_name() {
         Some(n) => n,
         None => {
-            let e = format!("\"{}\" property must have a name associated with it.", keywords::PREFIX);
-            return err_result(prop, e);
+            return err_result(prop, format!(
+                "\"{}\" property must have a name associated with it.",
+                keywords::PREFIX,
+            ));
         }
     };
 
@@ -158,12 +162,12 @@ fn add_prefix<'a>(prop: &'a nodes::Property<'a>, by_name: &mut HashMap<String, P
 
     if let Some(existing) = by_name.get(&prefix_normalized) {
         let orig_at = ParsingError::fmt_position_line(&existing.property_node_.position_details());
-        let e = format!("Duplicate {} \"{}\".\n{}",
-                        keywords::PREFIX,
-                        prefix_name,
-                        orig_at,
-        );
-        return err_result(prop, e);
+        return err_result(prop, format!(
+            "Duplicate {} \"{}\".\n{}",
+            keywords::PREFIX,
+            prefix_name,
+            orig_at,
+        ));
     }
 
     let mut ir = Prefix {
@@ -181,27 +185,25 @@ fn add_prefix<'a>(prop: &'a nodes::Property<'a>, by_name: &mut HashMap<String, P
             match child_prop.property_type() {
                 keywords::ENV => add_prefix_env(&mut ir, child_prop)?,
                 keywords::OVERRIDE => add_prefix_override(&mut ir, child_prop)?,
-                _ => {
-                    let e = format!("Unknown property type \"{}\" in {} \"{}\"\n    Expected: {} or {}",
-                                    child_prop.property_type(),
-                                    keywords::PREFIX,
-                                    prefix_name,
-                                    keywords::ENV,
-                                    keywords::OVERRIDE,
-                    );
-                    return err_result(child_prop.as_node(), e);
-                }
+                _ => return err_result(child_prop.as_node(), format!(
+                    "Unknown property type \"{}\" in {} \"{}\"\n    Expected: {} or {}",
+                    child_prop.property_type(),
+                    keywords::PREFIX,
+                    prefix_name,
+                    keywords::ENV,
+                    keywords::OVERRIDE,
+                )),
             }
         }
     }
 
     if ir.path_by_environment_.len() == 0 {
-        let e = format!("No \"{}\" properties defined in {} \"{}\"",
-                        keywords::ENV,
-                        keywords::PREFIX,
-                        prefix_name,
-        );
-        return err_result(prop, e);
+        return err_result(prop, format!(
+            "No \"{}\" properties defined in {} \"{}\"",
+            keywords::ENV,
+            keywords::PREFIX,
+            prefix_name,
+        ));
     }
 
     by_name.insert(prefix_normalized, ir);
@@ -212,22 +214,22 @@ fn add_prefix_env<'a>(ir: &mut Prefix<'a>, prop: &'a nodes::Property<'a>) -> Emp
     let env_name = match prop.property_name() {
         Some(n) => n,
         None => {
-            let e = format!("Environment name is empty in {} \"{}\"",
-                            keywords::PREFIX,
-                            ir.name_,
-            );
-            return err_result(prop.as_node(), e);
+            return err_result(prop.as_node(), format!(
+                "Environment name is empty in {} \"{}\"",
+                keywords::PREFIX,
+                ir.name_,
+            ));
         },
     };
 
     let env_normalized = str_normalize(env_name);
     if let Some(_) = ir.path_by_environment_.get(&env_normalized) {
-        let e = format!("Duplicate environment \"{}\" in {} \"{}\"",
-                        env_name,
-                        keywords::PREFIX,
-                        ir.name_,
-        );
-        return err_result(prop.as_node(), e);
+        return err_result(prop.as_node(), format!(
+            "Duplicate environment \"{}\" in {} \"{}\"",
+            env_name,
+            keywords::PREFIX,
+            ir.name_,
+        ));
     }
 
     let env_path = match prop.value_node() {
@@ -236,13 +238,13 @@ fn add_prefix_env<'a>(ir: &mut Prefix<'a>, prop: &'a nodes::Property<'a>) -> Emp
     };
 
     if str_is_whitespace(env_path) {
-        let e = format!("Value of {} \"{}\" is missing or empty in {} \"{}\"",
-                        keywords::ENV,
-                        env_name,
-                        keywords::PREFIX,
-                        ir.name_,
-        );
-        return err_result(prop.as_node(), e);
+        return err_result(prop.as_node(), format!(
+            "Value of {} \"{}\" is missing or empty in {} \"{}\"",
+            keywords::ENV,
+            env_name,
+            keywords::PREFIX,
+            ir.name_,
+        ));
     }
 
     let path = Path { name_: env_name, raw_value_: env_path };
@@ -253,36 +255,34 @@ fn add_prefix_env<'a>(ir: &mut Prefix<'a>, prop: &'a nodes::Property<'a>) -> Emp
 
 fn add_prefix_override<'a>(ir: &mut Prefix<'a>, prop: &'a nodes::Property<'a>) -> EmptyResult {
     if ir.override_mode_ != OverrideMode::Undefined {
-        let e = format!("Multiple {} properties in {} \"{}\"",
-                        keywords::OVERRIDE,
-                        keywords::PREFIX,
-                        ir.name_,
-        );
-        return err_result(prop.as_node(), e);
+        return err_result(prop.as_node(), format!(
+            "Multiple {} properties in {} \"{}\"",
+            keywords::OVERRIDE,
+            keywords::PREFIX,
+            ir.name_,
+        ));
     }
 
     if let Some(_) = prop.property_name() {
-        let e = format!("Expected a colon (:) after \"{}\" in {} \"{}\"",
-                        keywords::OVERRIDE,
-                        keywords::PREFIX,
-                        ir.name_,
-        );
-        return err_result(prop.as_node(), e);
+        return err_result(prop.as_node(), format!(
+            "Expected a colon (:) after \"{}\" in {} \"{}\"",
+            keywords::OVERRIDE,
+            keywords::PREFIX,
+            ir.name_,
+        ));
     }
 
     ir.override_mode_ = match prop.value_str() {
         Some(keywords::MERGE) => OverrideMode::Merge,
         Some(keywords::REPLACE) => OverrideMode::Replace,
         Some(keywords::NONE) => OverrideMode::None,
-        _ => {
-            let e = format!("Value of {} must be \"{}\", \"{}\", or \"{}\"",
-                            keywords::OVERRIDE,
-                            keywords::MERGE,
-                            keywords::REPLACE,
-                            keywords::NONE,
-            );
-            return err_result(prop.as_node(), e);
-        },
+        _ => return err_result(prop.as_node(), format!(
+            "Value of {} must be \"{}\", \"{}\", or \"{}\"",
+            keywords::OVERRIDE,
+            keywords::MERGE,
+            keywords::REPLACE,
+            keywords::NONE,
+        )),
     };
 
     Ok(())
