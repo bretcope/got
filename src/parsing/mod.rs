@@ -13,6 +13,8 @@ pub use self::parser::*;
 pub mod ir;
 pub mod keywords;
 
+pub use super::*;
+
 #[derive(Debug, Copy, Clone)]
 pub enum SyntaxElement<'a> {
     Token(&'a Token<'a>),

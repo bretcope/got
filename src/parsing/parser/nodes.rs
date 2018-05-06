@@ -1,6 +1,7 @@
 use super::*;
 use std::fmt;
 use colors::*;
+use profile::PositionDetails;
 
 #[derive(Debug)]
 pub enum NodeType<'a> {
@@ -23,7 +24,7 @@ pub trait Node<'a>: fmt::Debug + fmt::Display {
 
     fn syntax_elements(&'a self, list: &mut Vec<SyntaxElement<'a>>);
 
-    fn content_position(&'a self) -> (&'a FileContent, usize) {
+    fn position_details(&'a self) -> PositionDetails<'a> {
         let mut list = Vec::new();
         let mut element = self.as_syntax_element();
         while let SyntaxElement::Node(node) = element {
@@ -33,7 +34,7 @@ pub trait Node<'a>: fmt::Debug + fmt::Display {
         }
 
         if let SyntaxElement::Token(token) = element {
-            return (token.content, token.text_start);
+            return token.content.position_details(token.text_start);
         }
 
         panic!("Could not find token for node: {}", self)
@@ -173,24 +174,17 @@ impl<'a> Property<'a> {
         self.declaration().property_name()
     }
 
-    pub fn has_value(&self) -> bool {
-        match &self.value_ {
-            &Some(_) => true,
-            &None => false,
-        }
-    }
-
-    pub fn value(&'a self) -> Option<&'a PropertyValue<'a>> {
+    pub fn value_node(&'a self) -> Option<&'a PropertyValue<'a>> {
         match &self.value_ {
             &Some(ref value) => Some(value),
             &None => None,
         }
     }
 
-    pub fn has_block(&self) -> bool {
-        match &self.block_ {
-            &Some(_) => true,
-            &None => false,
+    pub fn value_str(&'a self) -> Option<&'a str> {
+        match &self.value_ {
+            &Some(ref value) => Some(value.value()),
+            &None => None,
         }
     }
 
@@ -226,7 +220,7 @@ impl<'a> Node<'a> for Property<'a> {
         writeln!(f, "{}", format_node_type(indent_level, "Property"))?;
         self.declaration_.print(f, indent_level + 1)?;
 
-        if let Some(value) = self.value() {
+        if let Some(value) = self.value_node() {
             value.print(f, indent_level + 1)?;
         }
 

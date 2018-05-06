@@ -89,7 +89,8 @@ impl<'a> Lexer<'a> {
                     for (i, wc) in self.content.text()[self.line_start_..self.text_start_].char_indices() {
                         if wc == '\t' {
                             let message = String::from("Tab character used for indentation. Four spaces must be used for indentation.");
-                            return Err(ParsingError::new(self.content, self.line_start_ + i, message));
+                            let pos = self.content.position_details(self.line_start_ + i);
+                            return Err(ParsingError::new(&pos, message));
                         }
                     }
                 }
@@ -370,7 +371,8 @@ impl<'a> Lexer<'a> {
         }
 
         let message = format!("Invalid escape sequence `{}`.", &self.content.text()[esc_pos..self.position()]);
-        Err(ParsingError::new(self.content, esc_pos, message))
+        let pos = self.content.position_details(esc_pos);
+        Err(ParsingError::new(&pos, message))
     }
 
     fn lex_block_text(&mut self) -> LexerResult<'a> {
@@ -468,7 +470,8 @@ impl<'a> Lexer<'a> {
     }
 
     fn err_result(&self, message: String) -> LexerResult<'a> {
-        Err(ParsingError::new(self.content, self.text_start_, message))
+        let pos = self.content.position_details(self.text_start_);
+        Err(ParsingError::new(&pos, message))
     }
 
     fn start_new_line(&mut self, line_start: usize) {

@@ -2,6 +2,9 @@ pub mod colors;
 pub mod parsing;
 pub mod profile;
 
+mod text;
+pub use text::*;
+
 #[macro_use]
 extern crate failure;
 

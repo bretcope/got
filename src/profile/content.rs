@@ -43,11 +43,13 @@ impl FileContent {
         }
     }
 
-    pub fn position_details(&self, position: usize) -> PositionDetails {
+    pub fn position_details<'a>(&'a self, byte_offset: usize) -> PositionDetails<'a> {
         let lines = self.line_starts_.borrow();
         let count = lines.len();
         if count == 0 {
             return PositionDetails {
+                content: &self,
+                byte_offset,
                 line_number: 0,
                 line_start: 0,
                 column: 0,
@@ -68,11 +70,11 @@ impl FileContent {
 
             line_start = lines[i];
 
-            if position >= line_start && (i + 1 == count || position < lines[i + 1]) {
+            if byte_offset >= line_start && (i + 1 == count || byte_offset < lines[i + 1]) {
                 break;
             }
 
-            if position < line_start {
+            if byte_offset < line_start {
                 // try earlier in the list
                 debug_assert_ne!(i, 0);
                 right = i;
@@ -85,12 +87,14 @@ impl FileContent {
             i = left + (right - left) / 2;
         }
 
-        debug_assert!(position >= line_start);
+        debug_assert!(byte_offset >= line_start);
         debug_assert!(self.text_.len() >= line_start);
 
-        let column = self.text_[line_start..position].chars().count();
+        let column = self.text_[line_start..byte_offset].chars().count();
 
         PositionDetails {
+            content: &self,
+            byte_offset,
             line_number: i,
             line_start,
             column,
@@ -107,7 +111,9 @@ impl FileContent {
 }
 
 #[derive(Debug)]
-pub struct PositionDetails {
+pub struct PositionDetails<'a> {
+    pub content: &'a FileContent,
+    pub byte_offset: usize,
     pub line_number: usize,
     pub line_start: usize,
     pub column: usize,
