@@ -4,20 +4,32 @@ use std::borrow::{Borrow,BorrowMut};
 
 #[derive(Debug)]
 pub struct Prefix<'a> {
-    pub property: &'a nodes::Property<'a>,
-    pub name: &'a str,
+    property_: &'a nodes::Property<'a>,
+    name_: &'a str,
     name_normalized_: String,
     paths_: Vec<Box<Path<'a>>>,
-    pub override_mode: OverrideMode,
+    override_mode_: OverrideMode,
 }
 
 impl<'a> Prefix<'a> {
+    pub fn property(&self) -> &nodes::Property<'a> {
+        &self.property_
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name_
+    }
+
     pub fn name_normalized(&self) -> &str {
         &self.name_normalized_
     }
 
     pub fn paths(&self) -> &Vec<Box<Path<'a>>> {
         &self.paths_
+    }
+
+    pub fn override_mode(&self) -> OverrideMode {
+        self.override_mode_
     }
 
     pub fn build(prop: &'a nodes::Property<'a>) -> ParsingBoxResult<Prefix<'a>> {
@@ -30,18 +42,15 @@ impl<'a> Prefix<'a> {
 
         let name_normalized = str_normalize(name);
         if name_normalized.is_empty() {
-            return err_result(prop, format!(
-                "\"{}\" property must have a non-empty name associated with it.",
-                keywords::PREFIX,
-            ));
+            return err_missing_name(prop);
         }
 
         let mut prefix = Box::new(Prefix {
-            property: prop,
-            name,
+            property_: prop,
+            name_: name,
             name_normalized_: name_normalized,
             paths_: Vec::new(),
-            override_mode: OverrideMode::Undefined,
+            override_mode_: OverrideMode::Undefined,
         });
 
         if let Some(value_node) = prop.value_node() {
@@ -64,58 +73,20 @@ fn build_from_block<'a>(prefix: &mut Prefix<'a>, block: &'a nodes::PropertyBlock
                 let path = Path::build(child_prop, child_prop.property_name())?;
                 prefix.paths_.push(path);
             },
-            keywords::OVERRIDE => prefix.override_mode = build_override(child_prop, prefix.override_mode)?,
-            _ => return err_result(child_prop.as_node(), format!(
-                "Unknown property type \"{}\" in {} \"{}\"\n    Expected: {} or {}",
-                child_prop.property_type(),
-                keywords::PREFIX,
-                prefix.name,
-                keywords::ENV,
-                keywords::OVERRIDE,
-            )),
+            keywords::OVERRIDE => prefix.override_mode_ = build_override(child_prop, prefix.override_mode_)?,
+            _ => return err_unexpected_property(
+                child_prop,
+                &[keywords::ENV, keywords::OVERRIDE]
+            ),
         }
     }
 
     Ok(())
 }
 
-fn build_override<'a>(prop: &'a nodes::Property<'a>, current_mode: OverrideMode) -> ParsingResult<OverrideMode> {
-    debug_assert_eq!(prop.property_type(), keywords::OVERRIDE);
-
-    if current_mode != OverrideMode::Undefined {
-        return err_result(prop, format!("Duplicate {} property", keywords::OVERRIDE));
-    }
-
-    if let Some(name) = prop.property_name() {
-        return err_result(prop, format!(
-            "Unexpected name \"{}\" given to {} property",
-            name,
-            keywords::OVERRIDE,
-        ));
-    }
-
-    match prop.value_str() {
-        Some(keywords::MERGE) => Ok(OverrideMode::Merge),
-        Some(keywords::REPLACE) => Ok(OverrideMode::Replace),
-        Some(keywords::NONE) => Ok(OverrideMode::None),
-        _ => err_result(prop, format!(
-            "Value of {} must be \"{}\", \"{}\", or \"{}\"",
-            keywords::OVERRIDE,
-            keywords::MERGE,
-            keywords::REPLACE,
-            keywords::NONE,
-        )),
-    }
-}
-
 fn assert_valid_paths(prefix: &Prefix) -> ParsingResult<()> {
     if prefix.paths_.len() == 0 {
-        return err_result(prefix.property, format!(
-            "No \"{}\" properties defined in {} \"{}\"",
-            keywords::ENV,
-            keywords::PREFIX,
-            prefix.name,
-        ));
+        return err_missing_child_property(prefix.property_, keywords::ENV);
     }
 
     let mut set = HashSet::new();
@@ -123,19 +94,12 @@ fn assert_valid_paths(prefix: &Prefix) -> ParsingResult<()> {
         let name_normalized = path.name_normalized();
 
         if name_normalized.is_empty() {
-            return err_result(path.property, format!(
-                "\"{}\" name is empty.",
-                keywords::ENV,
-            ));
+            return err_missing_name(path.property());
         }
 
         let existed = set.insert(name_normalized);
         if existed {
-            return err_result(path.property, format!(
-                "Duplicate {} \"{}\"",
-                keywords::ENV,
-                name_normalized,
-            ));
+            return err_duplicate_property_name(path.property());
         }
     }
 

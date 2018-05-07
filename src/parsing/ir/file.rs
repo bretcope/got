@@ -2,15 +2,39 @@ use super::*;
 
 #[derive(Debug)]
 pub struct File<'a> {
-    pub file_node: &'a nodes::File<'a>,
-    pub file_type: FileType,
-    pub aliases: Vec<Box<Alias<'a>>>,
-    pub includes: Vec<Box<Include<'a>>>,
-    pub prefixes: Vec<Box<Prefix<'a>>>,
-    pub repos: Vec<Box<Repo<'a>>>,
+    file_node_: &'a nodes::File<'a>,
+    file_type_: FileType,
+    aliases_: Vec<Box<Alias<'a>>>,
+    includes_: Vec<Box<Include<'a>>>,
+    prefixes_: Vec<Box<Prefix<'a>>>,
+    repos_: Vec<Box<Repo<'a>>>,
 }
 
 impl<'a> File<'a> {
+    pub fn file_node(&self) -> &'a nodes::File<'a> {
+        &self.file_node_
+    }
+
+    pub fn file_type(&self) -> FileType {
+        self.file_type_
+    }
+
+    pub fn aliases(&self) -> &Vec<Box<Alias<'a>>> {
+        &self.aliases_
+    }
+
+    pub fn includes(&self) -> &Vec<Box<Include<'a>>> {
+        &self.includes_
+    }
+
+    pub fn prefixes(&self) -> &Vec<Box<Prefix<'a>>> {
+        &self.prefixes_
+    }
+
+    pub fn repos(&self) -> &Vec<Box<Repo<'a>>> {
+        &self.repos_
+    }
+
     pub fn build(file_node: &'a nodes::File<'a>, file_type: FileType) -> ParsingBoxResult<File<'a>> {
         let properties = file_node.property_list().properties();
         debug_assert_ne!(properties.len(), 0, "PropertyList did not have any properties.");
@@ -25,36 +49,39 @@ impl<'a> File<'a> {
         for prop in properties.iter().skip(1) {
             let prop_type = prop.property_type();
             match prop_type {
-                keywords::REPO => {
-                    let repo = Repo::build(prop)?;
-                    repos.push(repo);
-                },
-                keywords::PREFIX => {
-                    let prefix = Prefix::build(prop)?;
-                    prefixes.push(prefix);
+                keywords::ALIAS => {
+                    let alias = Alias::build(prop)?;
+                    aliases.push(alias);
                 },
                 keywords::INCLUDE => {
                     let include = Include::build(prop)?;
                     includes.push(include);
                 },
-                keywords::ALIAS => {
-                    let alias = Alias::build(prop)?;
-                    aliases.push(alias);
+                keywords::PREFIX => {
+                    let prefix = Prefix::build(prop)?;
+                    prefixes.push(prefix);
+                },
+                keywords::REPO => {
+                    let repo = Repo::build(prop)?;
+                    repos.push(repo);
                 },
                 _ => {
-                    err_result(prop.as_node(), format!("Unknown property \"{}\"", prop_type))?;
+                    err_unexpected_property(
+                        prop,
+                        &[keywords::ALIAS, keywords::INCLUDE, keywords::PREFIX, keywords::REPO],
+                    )?;
                     panic!("MOT Bug: err_result did not return an error.");
                 },
             }
         }
 
         let file = Box::new(File {
-            file_node,
-            file_type,
-            aliases,
-            includes,
-            prefixes,
-            repos,
+            file_node_: file_node,
+            file_type_: file_type,
+            aliases_: aliases,
+            includes_: includes,
+            prefixes_: prefixes,
+            repos_: repos,
         });
 
         file.validate_identifiers()?;
@@ -89,12 +116,12 @@ fn validate_header<'a>(prop: &'a nodes::Property<'a>, file_type: FileType) -> Pa
         },
     };
 
-    if let Some(value) = prop.value_node() {
-        return err_result(value, format!("\"{}\" property cannot have a value.", prop_type));
+    if let Some(_value) = prop.value_node() {
+        return err_unexpected_value(prop);
     }
 
-    if let Some(block) = prop.block() {
-        return err_result(block, format!("\"{}\" property cannot have child properties.", prop_type));
+    if let Some(_block) = prop.block() {
+        return err_unexpected_block(prop);
     }
 
     Ok(())
