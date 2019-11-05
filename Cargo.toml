@@ -1,10 +1,12 @@
 [package]
-name = "cmot"
+name = "motcli"
 version = "0.1.0"
 authors = ["Bret Copeland <bret@atlantisflight.org>"]
 
 [dependencies]
 failure = "0.1.1"
+yaml-rust = "0.4.3"
+dirs = "2.0.2"
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3.4", features = ["consoleapi", "handleapi", "processenv", "winbase", "wincon"] }
