@@ -1,0 +1,35 @@
+replacements:
+  "~/bret":
+    wsl: /mnt/c/bret
+
+  "/mnt/c/bret":
+    default: "~/bret"
+
+imports:
+  - path: $stack/common/mot.yml
+    namespace: stack
+    filter:
+      - repo1
+      - repo2
+    variables:
+      code: $stack
+
+  - ~/.mot/two.yml
+
+directories:
+  so:
+    path: $stack/StackOverflow
+    git: git@whatever.git
+
+  other:
+    path: $stack/other
+    git:
+      remotes:
+        origin: git@something:other.git
+        alt: git@alternate:other.git
+
+  not-a-repo:
+    path: $stack/not-a-repo
+
+aliases:
+  stackoverflow: so

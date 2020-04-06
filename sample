@@ -1,0 +1,26 @@
+@[settings]
+map=wsl:/mnt/c -> gb:/c
+map=wsl:~/code -> gb:/c/code
+
+@[gitconfig]
+file@=
+==Literal contents of file
+==
+==Placed here
+==
+
+[nfig]
+wsl:path=~/code/NFig
+git=git@github.com:NFig/NFig.git
+
+[nfig.asp]
+wsl:path=~/code/NFig.Redis
+git=NFig.AspNetCore
+
+[certs]
+wsl:path=/etc/letsencrypt
+gb:path=/c/certs
+
+[mot]
+wsl:path=~/code/mot
+

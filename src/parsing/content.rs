@@ -2,7 +2,7 @@ use std::str::CharIndices;
 use std::fs::File;
 use std::io::Read;
 use std::cell::RefCell;
-use failure::Error;
+use std::error::Error;
 
 #[derive(Debug)]
 pub struct FileContent {
@@ -12,7 +12,7 @@ pub struct FileContent {
 }
 
 impl FileContent {
-    pub fn load(filename: &str) -> Result<FileContent, Error> {
+    pub fn load(filename: &str) -> Result<FileContent, Box<dyn Error>> {
         let mut file = File::open(filename)?;
         let mut text = String::new();
         file.read_to_string(&mut text)?;
@@ -43,12 +43,12 @@ impl FileContent {
         }
     }
 
-    pub fn position_details<'a>(&'a self, byte_offset: usize) -> PositionDetails<'a> {
+    pub fn position_details(&self, byte_offset: usize) -> PositionDetails {
         let lines = self.line_starts_.borrow();
         let count = lines.len();
         if count == 0 {
             return PositionDetails {
-                content: &self,
+                file_content: &self,
                 byte_offset,
                 line_number: 0,
                 line_start: 0,
@@ -93,7 +93,7 @@ impl FileContent {
         let column = self.text_[line_start..byte_offset].chars().count();
 
         PositionDetails {
-            content: &self,
+            file_content: &self,
             byte_offset,
             line_number: i,
             line_start,
@@ -112,7 +112,7 @@ impl FileContent {
 
 #[derive(Debug)]
 pub struct PositionDetails<'a> {
-    pub content: &'a FileContent,
+    pub file_content: &'a FileContent,
     pub byte_offset: usize,
     pub line_number: usize,
     pub line_start: usize,

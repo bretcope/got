@@ -1,0 +1,115 @@
+--- DESCRIPTION ----------------------------------------------------------------
+
+This is the grammar for MOT's configuration files. It defines the basics for
+implementing a parser. However, a configuration which parses correctly may still
+be invalid for other (semantic) reasons.
+
+Grammar Conventions:
+
+- Comments begin with "##" end go until the end of the line.
+- Terminals are camelCase or literal symbols.
+- Non-terminals are PascalCase
+- Each production of a non-terminal is placed on its own line, indented from the
+  non-terminal's name.
+- A grammar element followed by "_opt" is optional, and can resolve to ε
+
+--- FILE ENCODING --------------------------------------------------------------
+
+MOT configuration files must be UTF-8 encoded. Beginning the file with a byte
+order mark (BOM) is supported, though discouraged.
+
+--- LEXER DESCRIPTION ----------------------------------------------------------
+
+Although line-endings have semantic meaning, the lexer is otherwise whitespace-
+insensitive. Line endings can be LF or CRLF. The lexer treats the end of file
+as an implicit line ending. Lines which contain only whitespace are ignored.
+
+Comments begin with a hash (#) and are terminated at a end of line. Comments and
+non-literal whitespace do not generate tokens on their own. They are attached to
+other tokens as leading or trailing trivia. Whitespace is considered leading
+trivia when it immediately precedes the first token on a line. One or more lines
+immediately preceding a token are considered leading whitespace if those lines
+only contain comments (and optional whitespace). All other whitespace and
+comments are trailing whitespace. LF and CRLF sequences are typically attached
+as trailing trivia to the final token on the line.
+
+Whitespace is defined as the following characters:
+        U+0009 HORIZONTAL TAB
+        U+000b VERTICAL TAB
+        U+000c FORM FEED
+        U+0085 NEXT LINE
+        U+00a0 NO-BREAK SPACE
+        Any character in: Space_Separator, Line_Separator, Paragraph_Separator
+
+--- TERMINALS ------------------------------------------------------------------
+
+startOfInput        ->  The start of a file.
+
+endOfInput          ->  The end of a file.
+
+identifier          ->  A string of one or more consecutive characters in the
+                        following unicode categories:
+                            Uppercase_Letter, Lowercase_Letter, Titlecase_Letter,
+                            Modifier_Letter, Other_Letter, Letter_Number,
+                            Decimal_Number, Connector_Punctuation,
+                            Nonspacing_Mark, Spacing_Mark, Format
+
+value               ->  A "value" is essentially MOT's version of a string
+                        literal. A value begins with '=' or '@='.
+
+                        Values which begin with '=' terminate at the end of the
+                        line or at a '#' character (indicating a comment).
+                        Leading and trailing whitespace are trimmed.
+
+                        Values which begin with '@=' can terminate in one of two
+                        ways. If the @= is followed by non-whitespace on the
+                        same line, then the value terminates at the end of the
+                        line. However, whitespace is not trimmed from the value.
+
+                        If the @= is followed immediately by an end of line, or
+                        the remainder of the line only contains whitespace, then
+                        the lexer looks at each immediately-following line where
+                        the first non-whitespace characters are '=='. All
+                        characters immediately following == on each line are
+                        concatenated for form the value. Line endings are
+                        included in the literal value. However, the value
+                        terminates at the end of the final consecutive line
+                        which starts with '==' and this final line ending is not
+                        included in the literal value.
+
+                        Values which begin with @= may contain literal '#'
+                        characters.
+
+## Symbols
+
+openBracket         ->  [
+atOpenBracket       ->  @[
+closeBracket        ->  ]
+colon               ->  :
+
+--- NON-TERMINALS --------------------------------------------------------------
+
+File
+    startOfInput SectionList_opt EndOfInput
+
+SectionList
+    Section SectionList
+    Section
+
+Section
+    SectionHeader
+    KeyValueList_opt
+
+SectionHeader
+    @[ identifier ]
+    [ identifier ]
+
+KeyValueList
+    KeyValue KeyValueList
+    KeyValue
+
+KeyValue
+    Namespace_opt identifier value
+
+Namespace
+    identifier :

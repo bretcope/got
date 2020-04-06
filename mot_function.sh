@@ -4,7 +4,7 @@ function mot() {
 #  trap "rm -f $temp_script" RETURN
 #  chmod 600 "$temp_script"
 
-  output=$(/c/bret/rust/mot/target/debug/motcli.exe -s "$@")
+  output=$(/c/bret/rust/mot/target/debug/motcli.exe -s "$@" 2>&1)
   exit_code="$?"
 
   if [[ "$exit_code" == "2" ]]
